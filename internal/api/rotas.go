@@ -107,6 +107,8 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 	requisicao.DroneID = droneID
 	requisicao.Status = modelos.StatusAprovada
 
+	go notificarDrone(droneID, requisicao.IDRequisicao, req.Rota)
+
 	return c.JSON(fiber.Map{
 		"status":             "aprovada",
 		"id_requisicao":      requisicao.IDRequisicao,
@@ -114,6 +116,13 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		"creditos_debitados": 10,
 		"saldo_restante":     s.estado.ObterSaldo(req.CompanhiaID),
 	})
+
+}
+
+func notificarDrone(droneID, idRequisicao, rota string) {
+	// Aqui você faria uma requisição HTTP para o drone
+	// Por enquanto, apenas log
+	log.Printf("[BROKER] Notificando drone %s para missão %s", droneID, idRequisicao)
 }
 
 // recarregarCreditos adiciona créditos a uma companhia (apenas para testes)

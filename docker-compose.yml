@@ -1,51 +1,207 @@
 version: '3.8'
 
+networks:
+  pbl3-network:
+    driver: bridge
+
 services:
+  # Brokers (4 nós)
   broker1:
     build:
       context: .
       dockerfile: Dockerfile.broker
+    container_name: broker1
     command: -id=broker1 -porta=8080 -lider=true
     ports:
       - "8080:8080"
     networks:
-      - raft-network
+      - pbl3-network
     environment:
       - RAFT_NODE_ID=broker1
-      - RAFT_ADDRESS=broker1:8080
+    restart: unless-stopped
 
   broker2:
     build:
       context: .
       dockerfile: Dockerfile.broker
+    container_name: broker2
     command: -id=broker2 -porta=8081 -lider=false
     ports:
       - "8081:8081"
     networks:
-      - raft-network
+      - pbl3-network
     depends_on:
       - broker1
     environment:
       - RAFT_NODE_ID=broker2
-      - RAFT_ADDRESS=broker2:8081
       - RAFT_LEADER_ADDRESS=broker1:8080
+    restart: unless-stopped
 
   broker3:
     build:
       context: .
       dockerfile: Dockerfile.broker
+    container_name: broker3
     command: -id=broker3 -porta=8082 -lider=false
     ports:
       - "8082:8082"
     networks:
-      - raft-network
+      - pbl3-network
     depends_on:
       - broker1
     environment:
       - RAFT_NODE_ID=broker3
-      - RAFT_ADDRESS=broker3:8082
       - RAFT_LEADER_ADDRESS=broker1:8080
+    restart: unless-stopped
 
-networks:
-  raft-network:
-    driver: bridge
+  broker4:
+    build:
+      context: .
+      dockerfile: Dockerfile.broker
+    container_name: broker4
+    command: -id=broker4 -porta=8083 -lider=false
+    ports:
+      - "8083:8083"
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    environment:
+      - RAFT_NODE_ID=broker4
+      - RAFT_LEADER_ADDRESS=broker1:8080
+    restart: unless-stopped
+
+  # Drones (8 drones)
+  drone1:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone1
+    command: -id=drone1 -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
+
+  drone2:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone2
+    command: -id=drone2 -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
+
+  drone3:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone3
+    command: -id=drone3 -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
+
+  drone4:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone4
+    command: -id=drone4 -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
+
+  drone5:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone5
+    command: -id=drone5 -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
+
+  drone6:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone6
+    command: -id=drone6 -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
+
+  drone7:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone7
+    command: -id=drone7 -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
+
+  drone8:
+    build:
+      context: .
+      dockerfile: Dockerfile.drone
+    container_name: drone8
+    command: -id=drone8 -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
+
+  # Companhias (2 companhias autônomas)
+  company-a:
+    build:
+      context: .
+      dockerfile: Dockerfile.company
+    container_name: company-a
+    command: -id=COMP-A -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+      - drone1
+    restart: unless-stopped
+
+  company-b:
+    build:
+      context: .
+      dockerfile: Dockerfile.company
+    container_name: company-b
+    command: -id=COMP-B -broker=http://broker1:8080
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+      - drone1
+    restart: unless-stopped
+
+  # Monitor (opcional - para visualizar logs)
+  monitor:
+    image: alpine:latest
+    container_name: monitor
+    command: sh -c "apk add --no-cache curl jq && tail -f /dev/null"
+    networks:
+      - pbl3-network
+    depends_on:
+      - broker1
+    restart: unless-stopped
