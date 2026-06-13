@@ -16,6 +16,7 @@ type ServidorAPI struct {
 	estado       *consenso.EstadoLedger
 	raftNode     *consenso.NoRaft
 	droneManager *drone.GerenciadorDrones
+	drones       map[string]string // ADICIONAR ESTA LINHA: ID do drone -> porta
 }
 
 // NovoServidorAPI cria um novo servidor HTTP
@@ -35,6 +36,7 @@ func NovoServidorAPI(porta string, estado *consenso.EstadoLedger, raftNode *cons
 		estado:       estado,
 		raftNode:     raftNode,
 		droneManager: droneManager,
+		drones:       make(map[string]string), // ADICIONAR ESTA LINHA
 	}
 }
 
@@ -58,18 +60,13 @@ func (s *ServidorAPI) RegistrarRotas() {
 	// Rotas para drones
 	s.app.Post("/drone/registrar", s.registrarDrone)
 	s.app.Post("/drone/relatar-missao", s.relatarMissao)
-
-	// Rota para verificar integridade da cadeia
-	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos)
-
-	// Nova rota para estatísticas
-	s.app.Get("/estatisticas", s.obterEstatisticasLaudos)
+	s.app.Post("/drone/liberar", s.liberarDrone) // ADICIONAR ESTA LINHA
 
 	// Rotas internas entre brokers
 	s.app.Post("/raft/comando", s.receberComandoRaft)
 
-	// Nova rota para verificar integridade da cadeia
-	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos)
-
-	s.app.Post("/drone/liberar", s.liberarDrone)
+	// Rotas de auditoria
+	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos) // ADICIONAR ESTA LINHA
+	s.app.Get("/estatisticas", s.obterEstatisticasLaudos)   // ADICIONAR ESTA LINHA
+	s.app.Get("/drone/status", s.statusDrone)
 }

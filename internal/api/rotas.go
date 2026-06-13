@@ -1,13 +1,23 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
 
 	"W-PBL3/internal/consenso"
 	"W-PBL3/pkg/modelos"
 
 	"github.com/gofiber/fiber/v2"
 )
+
+// Estrutura para armazenar informações do drone
+type DroneInfo struct {
+	ID    string
+	Porta string
+}
 
 // healthCheck verifica se o broker está vivo
 func (s *ServidorAPI) healthCheck(c *fiber.Ctx) error {
@@ -107,7 +117,7 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 	requisicao.DroneID = droneID
 	requisicao.Status = modelos.StatusAprovada
 
-	go notificarDrone(droneID, requisicao.IDRequisicao, req.Rota)
+	go s.notificarDrone(droneID, requisicao.IDRequisicao, req.Rota)
 
 	return c.JSON(fiber.Map{
 		"status":             "aprovada",
@@ -117,12 +127,6 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		"saldo_restante":     s.estado.ObterSaldo(req.CompanhiaID),
 	})
 
-}
-
-func notificarDrone(droneID, idRequisicao, rota string) {
-	// Aqui você faria uma requisição HTTP para o drone
-	// Por enquanto, apenas log
-	log.Printf("[BROKER] Notificando drone %s para missão %s", droneID, idRequisicao)
 }
 
 // recarregarCreditos adiciona créditos a uma companhia (apenas para testes)
@@ -158,41 +162,6 @@ func (s *ServidorAPI) recarregarCreditos(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"status":     "recarga realizada",
 		"novo_saldo": s.estado.ObterSaldo(req.CompanhiaID),
-	})
-}
-
-// registrarDrone registra um drone no sistema
-func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
-	var req struct {
-		DroneID string `json:"drone_id"`
-		Porta   string `json:"porta"`
-	}
-
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"erro": "Requisição inválida"})
-	}
-
-	s.droneManager.RegistrarDrone(req.DroneID, req.Porta)
-	return c.JSON(fiber.Map{"status": "drone registrado", "drone_id": req.DroneID})
-}
-
-// verificarCadeiaLaudos verifica a integridade da cadeia de laudos
-func (s *ServidorAPI) verificarCadeiaLaudos(c *fiber.Ctx) error {
-	integro, mensagem := s.estado.VerificarCadeiaLaudos()
-
-	// Contagem segura de laudos
-	totalLaudos := 0
-	historico := s.estado.ObterHistorico()
-	for _, t := range historico {
-		if t.Tipo == consenso.TipoLaudo {
-			totalLaudos++
-		}
-	}
-
-	return c.JSON(fiber.Map{
-		"cadeia_integra": integro,
-		"mensagem":       mensagem,
-		"total_laudos":   totalLaudos,
 	})
 }
 
@@ -256,6 +225,92 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		"status":         "laudo registrado com sucesso",
 		"id_requisicao":  laudo.IDRequisicao,
 		"drone_liberado": true,
+	})
+}
+
+func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
+	var req struct {
+		DroneID string `json:"drone_id"`
+		Porta   string `json:"porta"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"erro": "Requisição inválida"})
+	}
+
+	// Armazenar informações do drone
+	s.droneManager.RegistrarDrone(req.DroneID, req.Porta)
+
+	// Armazenar porta para notificação
+	if s.drones == nil {
+		s.drones = make(map[string]string)
+	}
+	s.drones[req.DroneID] = req.Porta
+
+	log.Printf("[DRONE] Drone %s registrado na porta %s", req.DroneID, req.Porta)
+	return c.JSON(fiber.Map{"status": "drone registrado", "drone_id": req.DroneID})
+}
+
+// Função para notificar drone via HTTP
+func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota string) {
+	// Obter porta do drone
+	porta, existe := s.drones[droneID]
+	if !existe {
+		log.Printf("[BROKER] ❌ Drone %s não encontrado no registro", droneID)
+		return
+	}
+
+	// Preparar payload
+	payload := map[string]interface{}{
+		"id_requisicao": idRequisicao,
+		"drone_id":      droneID,
+		"rota":          rota,
+	}
+	jsonData, _ := json.Marshal(payload)
+
+	// Fazer requisição HTTP para o drone
+	url := fmt.Sprintf("http://localhost:%s/iniciar-missao", porta)
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[BROKER] ❌ Erro ao notificar drone %s: %v", droneID, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		log.Printf("[BROKER] ✅ Drone %s notificado para missão %s", droneID, idRequisicao)
+	} else {
+		log.Printf("[BROKER] ⚠️ Drone %s respondeu com status %d", droneID, resp.StatusCode)
+	}
+}
+
+// verificarCadeiaLaudos verifica a integridade da cadeia de laudos
+func (s *ServidorAPI) verificarCadeiaLaudos(c *fiber.Ctx) error {
+	integro, mensagem := s.estado.VerificarCadeiaLaudos()
+
+	// Contagem segura de laudos
+	totalLaudos := 0
+	historico := s.estado.ObterHistorico()
+	for _, t := range historico {
+		if t.Tipo == consenso.TipoLaudo {
+			totalLaudos++
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"cadeia_integra": integro,
+		"mensagem":       mensagem,
+		"total_laudos":   totalLaudos,
+	})
+}
+
+// statusDrone retorna o status atual dos drones (para debug)
+func (s *ServidorAPI) statusDrone(c *fiber.Ctx) error {
+	drones := s.droneManager.ListarDrones()
+	return c.JSON(fiber.Map{
+		"drones": drones,
+		"total":  len(drones),
+		"portas": s.drones,
 	})
 }
 

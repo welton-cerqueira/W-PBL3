@@ -1,46 +1,47 @@
 #!/bin/bash
 
-echo "=== INICIANDO SISTEMA LOCALMENTE ==="
+echo "=== INICIANDO SISTEMA COMPLETO W-PBL3 ==="
 
-# Matar processos anteriores
-pkill -f "broker/main.go" 2>/dev/null
-pkill -f "drone-simulator" 2>/dev/null
-pkill -f "company/main.go" 2>/dev/null
+# Matar processos antigos
+echo "1. Parando processos antigos..."
+pkill -f "bin/broker" 2>/dev/null
+pkill -f "bin/drone" 2>/dev/null
+pkill -f "bin/company" 2>/dev/null
+sleep 2
 
-# Iniciar broker líder
-echo "Iniciando broker líder..."
-go run cmd/broker/main.go -id=broker1 -porta=8080 -lider=true &
-BROKER_PID=$!
+# Iniciar broker
+echo "2. Iniciando broker..."
+./bin/broker -id=broker1 -porta=8080 -lider=true &
 sleep 3
 
-# Verificar se broker está rodando
+# Verificar broker
 if curl -s http://localhost:8080/health > /dev/null; then
-    echo "✅ Broker líder rodando na porta 8080"
+    echo "   ✅ Broker rodando"
 else
-    echo "❌ Falha ao iniciar broker"
+    echo "   ❌ Falha no broker"
     exit 1
 fi
 
-# Iniciar 4 drones (para teste local)
-echo -e "\nIniciando drones..."
-for i in {1..4}; do
-    go run cmd/drone-simulator/main.go -id=drone$i -broker=http://localhost:8080 &
-    echo "  ✅ Drone $i iniciado"
+# Iniciar 8 drones
+echo "3. Iniciando 8 drones..."
+for i in {1..8}; do
+    PORTA=$((9000 + i))
+    ./bin/drone -id=drone$i -broker=http://localhost:8080 -porta=$PORTA &
+    echo "   ✅ Drone $i (porta $PORTA)"
     sleep 1
 done
 
 # Iniciar companhias
-echo -e "\nIniciando companhias..."
-go run cmd/company/main.go -id=COMP-A -broker=http://localhost:8080 &
-go run cmd/company/main.go -id=COMP-B -broker=http://localhost:8080 &
+echo "4. Iniciando companhias..."
+./bin/company -id=COMP-A -broker=http://localhost:8080 &
+./bin/company -id=COMP-B -broker=http://localhost:8080 &
+echo "   ✅ COMP-A e COMP-B iniciadas"
 
-echo -e "\n=== SISTEMA INICIADO ==="
+echo ""
+echo "=== SISTEMA COMPLETO INICIADO ==="
 echo "Broker: http://localhost:8080"
-echo "Drones: 4 drones disponíveis"
-echo "Companhias: COMP-A e COMP-B (requisições automáticas a cada 10-30s)"
+echo "Drones: 8 drones disponíveis (portas 9001-9008)"
+echo "Companhias: COMP-A e COMP-B (requisições automáticas)"
 echo ""
-echo "Pressione Ctrl+C para parar"
-echo ""
-
-# Aguardar sinais
-wait
+echo "Monitorar: curl http://localhost:8080/estatisticas"
+echo "Parar: pkill -f 'bin/(broker|drone|company)'"
