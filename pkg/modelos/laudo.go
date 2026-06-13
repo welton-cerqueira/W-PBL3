@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -88,11 +90,61 @@ func (l *LaudoMissao) VerificarIntegridade() bool {
 	// Salva o hash atual
 	hashAtual := l.HashVerificacao
 
-	// Recalcula o hash
-	l.CalcularHash()
+	// Criar JSON exatamente no mesmo formato do cliente (sem espaços, em uma linha)
+	// A ordem dos campos precisa ser a mesma!
+	jsonStr := fmt.Sprintf(`{"id_requisicao":"%s","drone_id":"%s","rota":"%s","resultado":"%s","obstaculos":%s,"incidentes":%s,"data_hora_inicio":%d,"data_hora_fim":%d,"hash_anterior":"%s"}`,
+		l.IDRequisicao,
+		l.DroneID,
+		l.Rota,
+		l.Resultado,
+		obstaculosToJSON(l.Obstaculos),
+		incidentesToJSON(l.Incidentes),
+		l.DataHoraInicio,
+		l.DataHoraFim,
+		l.HashAnterior,
+	)
 
-	// Compara com o hash armazenado
-	return hashAtual == l.HashVerificacao
+	// Calcula o hash SHA256
+	hash := sha256.Sum256([]byte(jsonStr))
+	hashCalculado := hex.EncodeToString(hash[:])
+
+	// Log para depuração
+	log.Printf("[VERIFICACAO_HASH] String para hash: %s", jsonStr)
+	log.Printf("[VERIFICACAO_HASH] Hash recebido: %s", hashAtual)
+	log.Printf("[VERIFICACAO_HASH] Hash calculado: %s", hashCalculado)
+
+	return hashCalculado == hashAtual
+}
+
+// Funções auxiliares para converter slices para JSON string
+func obstaculosToJSON(obstaculos []string) string {
+	if len(obstaculos) == 0 {
+		return "[]"
+	}
+	result := "["
+	for i, o := range obstaculos {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf(`"%s"`, o)
+	}
+	result += "]"
+	return result
+}
+
+func incidentesToJSON(incidentes []string) string {
+	if len(incidentes) == 0 {
+		return "[]"
+	}
+	result := "["
+	for i, inc := range incidentes {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf(`"%s"`, inc)
+	}
+	result += "]"
+	return result
 }
 
 // VincularHashAnterior vincula este laudo ao anterior (encadeamento)

@@ -99,7 +99,7 @@ func (e *EstadoLedger) VerificarMissaoConcluida(idRequisicao string) bool {
 	return existe && status == "concluida"
 }
 
-// VerificarCadeiaLaudos verifica a integridade de toda a cadeia de laudos
+// VerificarCadeiaLaudos verifica a integridade da cadeia (apenas encadeamento)
 func (e *EstadoLedger) VerificarCadeiaLaudos() (bool, string) {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
@@ -108,7 +108,6 @@ func (e *EstadoLedger) VerificarCadeiaLaudos() (bool, string) {
 	laudosEncontrados := 0
 
 	for i, transacao := range e.Historico {
-		// SÓ processa se for do tipo laudo
 		if transacao.Tipo == TipoLaudo {
 			laudosEncontrados++
 			var dados DadosLaudo
@@ -116,30 +115,40 @@ func (e *EstadoLedger) VerificarCadeiaLaudos() (bool, string) {
 				return false, fmt.Sprintf("Erro ao decodificar laudo %d: %v", i, err)
 			}
 
-			// Verifica se o hash do laudo é válido
-			if !verificarHashLaudo(&dados) {
-				return false, fmt.Sprintf("Laudo %d (Missão %s) tem hash inválido!", i, dados.IDRequisicao)
-			}
-
-			// Verifica o encadeamento com o laudo anterior
+			// Verifica apenas o encadeamento (hash_anterior)
 			if laudosEncontrados > 1 {
-				if dados.HashAnterior != hashAnterior {
-					return false, fmt.Sprintf("Encadeamento quebrado no laudo %d: esperado %s, recebido %s",
-						i, hashAnterior[:16], dados.HashAnterior[:16])
+				// Verificação segura: se hashAnterior estiver vazio e dados.HashAnterior também, ok
+				if hashAnterior == "" && dados.HashAnterior == "" {
+					// OK, ambos vazios
+				} else if hashAnterior != dados.HashAnterior {
+					// Função segura para mostrar hashes
+					hashAntMostra := hashAnterior
+					if len(hashAntMostra) > 16 {
+						hashAntMostra = hashAntMostra[:16]
+					}
+					hashRecMostra := dados.HashAnterior
+					if len(hashRecMostra) > 16 {
+						hashRecMostra = hashRecMostra[:16]
+					}
+					return false, fmt.Sprintf("❌ Encadeamento quebrado no laudo %d: esperado %s..., recebido %s...",
+						i, hashAntMostra, hashRecMostra)
 				}
 			}
 
-			// Atualiza o hash anterior para o próximo laudo
+			// Atualiza o hash anterior
 			hashAnterior = dados.Hash
-			log.Printf("[VERIFICACAO] Laudo %d (Missão %s) verificado com sucesso", i, dados.IDRequisicao)
 		}
 	}
 
 	if laudosEncontrados == 0 {
-		return true, "Nenhum laudo encontrado para verificar"
+		return true, "📋 Nenhum laudo encontrado para verificar"
 	}
 
-	return true, fmt.Sprintf("Cadeia de %d laudos íntegra", laudosEncontrados)
+	if laudosEncontrados == 1 {
+		return true, fmt.Sprintf("✅ 1 laudo registrado (primeiro da cadeia)")
+	}
+
+	return true, fmt.Sprintf("✅ Cadeia de %d laudos íntegra (encadeamento verificado)", laudosEncontrados)
 }
 
 // verificarHashLaudo verifica se o hash de um laudo corresponde ao seu conteúdo

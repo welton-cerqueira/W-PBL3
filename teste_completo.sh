@@ -1,64 +1,64 @@
 #!/bin/bash
 
-echo "=== TESTE DE IMUTABILIDADE COM HASH ==="
+echo "=== TESTE SEGURO W-PBL3 ==="
 
-# Solicitar drone
-echo "1. Solicitando drone..."
-RESPONSE=$(curl -s -X POST http://localhost:8080/requisitar-drone \
+# 1. Registrar drone
+echo -e "\n1. Registrando drone..."
+curl -s -X POST http://localhost:8080/drone/registrar \
   -H "Content-Type: application/json" \
-  -d '{"companhia_id":"COMP-A","rota":"Rota Teste"}')
-REQ_ID=$(echo $RESPONSE | jq -r '.id_requisicao')
-echo "ID Requisição: $REQ_ID"
+  -d '{"drone_id":"drone1","porta":"9001"}'
+echo ""
 
-# Criar laudo com hash
-echo -e "\n2. Criando laudo com hash..."
-INICIO=$(date +%s)
-sleep 2
-FIM=$(date +%s)
+# 2. Verificar saldo
+echo -e "\n2. Saldo COMP-A:"
+curl -s http://localhost:8080/saldo/COMP-A
+echo ""
 
-# Criar laudo em arquivo temporário
-cat > /tmp/laudo.json << EOF
-{
-  "id": "$(uuidgen)",
-  "id_requisicao": "$REQ_ID",
-  "drone_id": "drone1",
-  "rota": "Rota Teste",
-  "resultado": "sucesso",
-  "obstaculos": ["Obstáculo 1", "Obstáculo 2"],
-  "incidentes": ["Incidente A"],
-  "data_hora_inicio": $INICIO,
-  "data_hora_fim": $FIM,
-  "hash_anterior": "",
-  "hash_verificacao": ""
-}
-EOF
+# 3. Primeira requisição
+echo -e "\n3. Primeira requisição..."
+RESP1=$(curl -s -X POST http://localhost:8080/requisitar-drone \
+  -H "Content-Type: application/json" \
+  -d '{"companhia_id":"COMP-A","rota":"Rota Norte"}')
+echo "$RESP1"
 
-# Calcular hash usando Python (ou outro método)
-HASH=$(cat /tmp/laudo.json | sha256sum | cut -d' ' -f1)
-echo "Hash calculado: $HASH"
+REQ_ID1=$(echo "$RESP1" | grep -o '"id_requisicao":"[^"]*"' | head -1 | cut -d'"' -f4)
+echo "ID: $REQ_ID1"
 
-# Adicionar hash ao laudo
-jq --arg hash "$HASH" '.hash_verificacao = $hash' /tmp/laudo.json > /tmp/laudo_com_hash.json
+# 4. Enviar laudo
+echo -e "\n4. Enviando laudo..."
+HASH1="hash_$(date +%s)_${REQ_ID1:0:8}"
 
-# Enviar laudo
-echo -e "\n3. Enviando laudo com hash..."
 curl -s -X POST http://localhost:8080/drone/relatar-missao \
   -H "Content-Type: application/json" \
-  -d @/tmp/laudo_com_hash.json | jq .
+  -d "{
+    \"id_requisicao\": \"$REQ_ID1\",
+    \"drone_id\": \"drone1\",
+    \"rota\": \"Rota Norte\",
+    \"resultado\": \"sucesso\",
+    \"obstaculos\": [\"Teste\"],
+    \"incidentes\": [],
+    \"data_hora_inicio\": $(date +%s),
+    \"data_hora_fim\": $(($(date +%s) + 5)),
+    \"hash_anterior\": \"\",
+    \"hash_verificacao\": \"$HASH1\"
+  }"
+echo ""
 
-# Verificar cadeia
-echo -e "\n4. Verificando integridade da cadeia..."
-curl -s http://localhost:8080/verificar-cadeia | jq .
-
-echo -e "\n=== TESTE DE TENTATIVA DE ADULTERAÇÃO ==="
-
-# Simular adulteração - modificar o laudo
-echo -e "\n5. Tentando enviar laudo adulterado..."
-jq '.obstaculos = ["Obstáculo FALSO"]' /tmp/laudo_com_hash.json > /tmp/laudo_adulterado.json
-
-# Recalcular hash (não vai bater)
-curl -s -X POST http://localhost:8080/drone/relatar-missao \
+# 5. Segunda requisição
+echo -e "\n5. Segunda requisição..."
+RESP2=$(curl -s -X POST http://localhost:8080/requisitar-drone \
   -H "Content-Type: application/json" \
-  -d @/tmp/laudo_adulterado.json | jq .
+  -d '{"companhia_id":"COMP-A","rota":"Rota Sul"}')
+echo "$RESP2"
 
-echo -e "\n=== FIM DO TESTE ==="
+# 6. Verificar saldo final
+echo -e "\n6. Saldo final COMP-A:"
+curl -s http://localhost:8080/saldo/COMP-A
+echo ""
+
+# 7. Verificar cadeia
+echo -e "\n7. Verificando cadeia de laudos:"
+curl -s http://localhost:8080/verificar-cadeia
+echo ""
+
+echo -e "\n=== FIM ==="

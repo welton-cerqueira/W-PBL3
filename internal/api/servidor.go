@@ -70,4 +70,6 @@ func (s *ServidorAPI) RegistrarRotas() {
 
 	// Nova rota para verificar integridade da cadeia
 	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos)
+
+	s.app.Post("/drone/liberar", s.liberarDrone)
 }
