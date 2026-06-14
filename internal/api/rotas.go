@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"W-PBL3/internal/consenso"
 	"W-PBL3/pkg/modelos"
@@ -89,7 +90,8 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 
 	// Aplica a transação via Raft
 	if err := s.raftNode.AplicarTransacao(transacao); err != nil {
-		if err.Error() == "saldo insuficiente" {
+		// CORREÇÃO: verifica se a mensagem contém "saldo insuficiente"
+		if strings.Contains(err.Error(), "saldo insuficiente") {
 			return c.Status(402).JSON(fiber.Map{
 				"erro":   "Saldo insuficiente",
 				"status": "negada",
