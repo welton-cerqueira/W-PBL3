@@ -91,8 +91,7 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 	}
 
 	// Aplica a transação via Raft
-	_, err := s.raftNode.AplicarTransacao(transacao)
-	if err != nil {
+	if _, err := s.raftNode.AplicarTransacao(transacao); err != nil {
 		// CORREÇÃO: verifica se a mensagem contém "saldo insuficiente"
 		if strings.Contains(err.Error(), "saldo insuficiente") {
 			return c.Status(402).JSON(fiber.Map{
@@ -214,7 +213,7 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao criar transação: " + err.Error()})
 	}
 
-	if err := s.raftNode.AplicarTransacao(transacao); err != nil {
+	if _, err := s.raftNode.AplicarTransacao(transacao); err != nil {
 		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao aplicar transação: " + err.Error()})
 	}
 
