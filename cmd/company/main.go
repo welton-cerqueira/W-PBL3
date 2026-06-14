@@ -16,10 +16,11 @@ import (
 )
 
 var (
-	companyID  string
-	brokerList string            // lista de brokers (ex: "broker1=192.168.1.10:8080,broker2=...")
-	brokers    map[string]string // id -> endereço
-	rotas      = []string{"Rota Norte", "Rota Sul", "Rota Leste", "Rota Oeste", "Rota Central"}
+	companyID     string
+	brokerList    string
+	brokers       map[string]string
+	rotas         = []string{"Rota Norte", "Rota Sul", "Rota Leste", "Rota Oeste", "Rota Central"}
+	ultimaRecarga time.Time
 )
 
 func main() {
@@ -105,7 +106,7 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 			if err2 != nil {
 				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
 			}
-			// Extrai o caminho da URL original (ex: "/requisitar-drone")
+			// Extrai o caminho da URL original
 			path := "/"
 			if strings.Contains(url, "/") {
 				parts := strings.SplitN(url, "/", 4)
@@ -151,42 +152,51 @@ func simularRequisicoes() {
 	}
 }
 
+// requisitarDrone com retry após recarga
 func requisitarDrone(rota string) string {
-	leaderAddr, err := descobreLider()
-	if err != nil {
-		log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
-		return ""
-	}
-	url := "http://" + leaderAddr + "/requisitar-drone"
+	maxTentativas := 2
+	for tentativa := 1; tentativa <= maxTentativas; tentativa++ {
+		leaderAddr, err := descobreLider()
+		if err != nil {
+			log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
+			return ""
+		}
+		url := "http://" + leaderAddr + "/requisitar-drone"
 
-	reqData := map[string]string{
-		"companhia_id": companyID,
-		"rota":         rota,
-	}
-	jsonData, _ := json.Marshal(reqData)
+		reqData := map[string]string{
+			"companhia_id": companyID,
+			"rota":         rota,
+		}
+		jsonData, _ := json.Marshal(reqData)
 
-	resp, err := doRequestWithRedirect("POST", url, jsonData)
-	if err != nil {
-		log.Printf("[COMPANY %s] Erro na requisição: %v", companyID, err)
-		return ""
-	}
-	defer resp.Body.Close()
+		resp, err := doRequestWithRedirect("POST", url, jsonData)
+		if err != nil {
+			log.Printf("[COMPANY %s] Erro na requisição: %v", companyID, err)
+			return ""
+		}
+		defer resp.Body.Close()
 
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return fmt.Sprintf("Erro ao decodificar resposta: %v", err)
-	}
+		var result map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return fmt.Sprintf("Erro ao decodificar resposta: %v", err)
+		}
 
-	if resp.StatusCode == 402 {
-		log.Printf("[COMPANY %s] Saldo insuficiente! Recarregando...", companyID)
-		recarregarCreditos(100)
-	}
+		// Se saldo insuficiente e é a primeira tentativa, recarrega e tenta novamente
+		if resp.StatusCode == 402 && tentativa == 1 {
+			log.Printf("[COMPANY %s] Saldo insuficiente! Recarregando e tentando novamente...", companyID)
+			recarregarCreditos(100)
+			// Aguarda a recarga ser aplicada e replicada
+			time.Sleep(1 * time.Second)
+			continue
+		}
 
-	status := result["status"]
-	if status == nil {
-		status = result["erro"]
+		status := result["status"]
+		if status == nil {
+			status = result["erro"]
+		}
+		return fmt.Sprintf("HTTP %d: %v", resp.StatusCode, status)
 	}
-	return fmt.Sprintf("HTTP %d: %v", resp.StatusCode, status)
+	return "Falha após tentativas (saldo insuficiente persistente)"
 }
 
 func verificarSaldo() {
@@ -222,6 +232,13 @@ func verificarSaldo() {
 }
 
 func recarregarCreditos(valor int) {
+	// Evita múltiplas recargas no mesmo segundo
+	if time.Since(ultimaRecarga) < 5*time.Second {
+		log.Printf("[COMPANY %s] Recarga muito recente, ignorando para evitar spam.", companyID)
+		return
+	}
+	ultimaRecarga = time.Now()
+
 	leaderAddr, err := descobreLider()
 	if err != nil {
 		log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
@@ -250,6 +267,8 @@ func recarregarCreditos(valor int) {
 
 	if novoSaldo, ok := result["novo_saldo"].(float64); ok {
 		log.Printf("[COMPANY %s] ✅ Recarga de %d créditos realizada! Novo saldo: %.0f", companyID, valor, novoSaldo)
+		// Aguarda um pouco para a recarga ser replicada (evita falha na próxima requisição)
+		time.Sleep(500 * time.Millisecond)
 	} else {
 		log.Printf("[COMPANY %s] Recarga solicitada: %d créditos", companyID, valor)
 	}
