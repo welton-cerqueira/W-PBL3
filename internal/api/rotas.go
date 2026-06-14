@@ -25,8 +25,9 @@ func (s *ServidorAPI) healthCheck(c *fiber.Ctx) error {
 
 // consultarSaldo retorna o saldo de uma companhia
 func (s *ServidorAPI) consultarSaldo(c *fiber.Ctx) error {
+	estado := s.raftNode.ObterEstado()
 	companhiaID := c.Params("companhia_id")
-	saldo := s.estado.ObterSaldo(companhiaID)
+	saldo := estado.ObterSaldo(companhiaID)
 
 	return c.JSON(fiber.Map{
 		"companhia_id": companhiaID,
@@ -36,7 +37,8 @@ func (s *ServidorAPI) consultarSaldo(c *fiber.Ctx) error {
 
 // consultarHistorico retorna todo o histórico do ledger
 func (s *ServidorAPI) consultarHistorico(c *fiber.Ctx) error {
-	historico := s.estado.ObterHistorico()
+	estado := s.raftNode.ObterEstado()
+	historico := estado.ObterHistorico()
 	return c.JSON(fiber.Map{
 		"total_transacoes": len(historico),
 		"historico":        historico,
@@ -112,6 +114,7 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 
 	requisicao.DroneID = droneID
 	requisicao.Status = modelos.StatusAprovada
+	estado := s.raftNode.ObterEstado()
 
 	go s.notificarDrone(droneID, requisicao.IDRequisicao, req.Rota, req.CompanhiaID)
 
@@ -120,7 +123,7 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		"id_requisicao":      requisicao.IDRequisicao,
 		"drone_id":           droneID,
 		"creditos_debitados": 10,
-		"saldo_restante":     s.estado.ObterSaldo(req.CompanhiaID),
+		"saldo_restante":     estado.ObterSaldo(req.CompanhiaID),
 	})
 }
 
@@ -153,10 +156,11 @@ func (s *ServidorAPI) recarregarCreditos(c *fiber.Ctx) error {
 	if err := s.raftNode.AplicarTransacao(transacao); err != nil {
 		return c.Status(500).JSON(fiber.Map{"erro": err.Error()})
 	}
+	estado := s.raftNode.ObterEstado()
 
 	return c.JSON(fiber.Map{
 		"status":     "recarga realizada",
-		"novo_saldo": s.estado.ObterSaldo(req.CompanhiaID),
+		"novo_saldo": estado.ObterSaldo(req.CompanhiaID),
 	})
 }
 
@@ -211,7 +215,8 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 	s.droneManager.LiberarDrone(laudo.DroneID)
 	log.Printf("[DRONE] Drone %s liberado após missão %s", laudo.DroneID, laudo.IDRequisicao)
 
-	saldo := s.estado.ObterSaldo(companhiaID)
+	estado := s.raftNode.ObterEstado()
+	saldo := estado.ObterSaldo(companhiaID)
 
 	log.Printf("========== LAUDO COMPLETO ==========")
 	log.Printf("ID Requisição: %s", laudo.IDRequisicao)
@@ -307,11 +312,12 @@ func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota, companhiaID st
 
 // verificarCadeiaLaudos verifica a integridade da cadeia de laudos
 func (s *ServidorAPI) verificarCadeiaLaudos(c *fiber.Ctx) error {
-	integro, mensagem := s.estado.VerificarCadeiaLaudos()
+	estado := s.raftNode.ObterEstado()
+	integro, mensagem := estado.VerificarCadeiaLaudos()
 
 	// Contagem segura de laudos
 	totalLaudos := 0
-	historico := s.estado.ObterHistorico()
+	historico := estado.ObterHistorico()
 	for _, t := range historico {
 		if t.Tipo == consenso.TipoLaudo {
 			totalLaudos++
@@ -365,26 +371,16 @@ func (s *ServidorAPI) receberComandoRaft(c *fiber.Ctx) error {
 	if err := c.BodyParser(&transacao); err != nil {
 		return c.Status(400).JSON(fiber.Map{"erro": "Transação inválida"})
 	}
-
-	if err := s.estado.AplicarTransacao(&transacao); err != nil {
+	estado := s.raftNode.ObterEstado()
+	if err := estado.AplicarTransacao(&transacao); err != nil {
 		return c.Status(500).JSON(fiber.Map{"erro": err.Error()})
 	}
-
 	return c.JSON(fiber.Map{"status": "ok"})
-}
-
-// getLeader retorna o ID e o endereço da API do líder atual
-func (s *ServidorAPI) getLeader(c *fiber.Ctx) error {
-	liderID := s.raftNode.ObterLiderID()
-	liderAddr := s.raftNode.ObterLiderApiAddr() // método correto
-	return c.JSON(fiber.Map{
-		"leader_id":   liderID,
-		"leader_addr": liderAddr,
-	})
 }
 
 // obterEstatisticasLaudos retorna estatísticas dos laudos
 func (s *ServidorAPI) obterEstatisticasLaudos(c *fiber.Ctx) error {
-	estatisticas := s.estado.ObterEstatisticasLaudos()
+	estado := s.raftNode.ObterEstado()
+	estatisticas := estado.ObterEstatisticasLaudos()
 	return c.JSON(estatisticas)
 }

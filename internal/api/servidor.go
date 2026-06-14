@@ -12,9 +12,9 @@ import (
 )
 
 type ServidorAPI struct {
-	app          *fiber.App
-	porta        string
-	estado       *consenso.EstadoLedger
+	app   *fiber.App
+	porta string
+	// estado removido – agora obtém via raftNode.ObterEstado()
 	raftNode     *consenso.TCPRaft
 	droneManager *drone.GerenciadorDrones
 	drones       map[string]string
@@ -22,7 +22,6 @@ type ServidorAPI struct {
 }
 
 func NovoServidorAPI(porta string, raftNode *consenso.TCPRaft, droneManager *drone.GerenciadorDrones) *ServidorAPI {
-	estado := raftNode.ObterEstado()
 	app := fiber.New(fiber.Config{
 		ServerHeader: "W-PBL3",
 		AppName:      "W-PBL3 Broker",
@@ -33,7 +32,6 @@ func NovoServidorAPI(porta string, raftNode *consenso.TCPRaft, droneManager *dro
 	return &ServidorAPI{
 		app:          app,
 		porta:        porta,
-		estado:       estado,
 		raftNode:     raftNode,
 		droneManager: droneManager,
 		drones:       make(map[string]string),
@@ -45,6 +43,16 @@ func (s *ServidorAPI) Iniciar() error {
 	return s.app.Listen(s.porta)
 }
 
+// getLeader retorna o ID e o endereço da API do líder atual
+func (s *ServidorAPI) getLeader(c *fiber.Ctx) error {
+	liderID := s.raftNode.ObterLiderID()
+	liderAddr := s.raftNode.ObterLiderApiAddr()
+	return c.JSON(fiber.Map{
+		"leader_id":   liderID,
+		"leader_addr": liderAddr,
+	})
+}
+
 // RegistrarRotas registra todas as rotas da API
 func (s *ServidorAPI) RegistrarRotas() {
 	// Rotas públicas (consulta)
@@ -52,7 +60,7 @@ func (s *ServidorAPI) RegistrarRotas() {
 	s.app.Get("/saldo/:companhia_id", s.consultarSaldo)
 	s.app.Get("/historico", s.consultarHistorico)
 	s.app.Get("/missoes", s.listarMissoes)
-	s.app.Get("/leader", s.getLeader) // NOVA ROTA: retorna o líder atual
+	s.app.Get("/leader", s.getLeader)
 
 	// Rotas para companhias
 	s.app.Post("/requisitar-drone", s.requisitarDrone)
