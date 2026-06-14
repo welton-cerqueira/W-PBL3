@@ -23,6 +23,7 @@ type TCPRaft struct {
 	state          *EstadoLedger
 	heartbeatCh    chan bool
 	stopCh         chan struct{}
+	lastHeartbeat  time.Time // timestamp do último heartbeat recebido (seguidor)
 }
 
 type RaftConfigTCP struct {
@@ -35,14 +36,15 @@ type RaftConfigTCP struct {
 
 func NewTCPRaft(cfg RaftConfigTCP) (*TCPRaft, error) {
 	r := &TCPRaft{
-		id:          cfg.NodeID,
-		addr:        cfg.RaftAddr,
-		apiAddr:     cfg.ApiAddr,
-		peers:       cfg.Peers,
-		isLeader:    cfg.Bootstrap,
-		state:       NovoEstadoLedger(),
-		heartbeatCh: make(chan bool, 100),
-		stopCh:      make(chan struct{}),
+		id:            cfg.NodeID,
+		addr:          cfg.RaftAddr,
+		apiAddr:       cfg.ApiAddr,
+		peers:         cfg.Peers,
+		isLeader:      cfg.Bootstrap,
+		state:         NovoEstadoLedger(),
+		heartbeatCh:   make(chan bool, 100),
+		stopCh:        make(chan struct{}),
+		lastHeartbeat: time.Now(),
 	}
 
 	if cfg.Bootstrap {
@@ -62,7 +64,7 @@ func NewTCPRaft(cfg RaftConfigTCP) (*TCPRaft, error) {
 	return r, nil
 }
 
-// tryJoin (mantém igual ao anterior, sem alterações)
+// tryJoin tenta se juntar ao cluster enviando um comando "join" para qualquer peer conhecido
 func (r *TCPRaft) tryJoin() {
 	for id, addr := range r.peers {
 		if id == r.id {
@@ -132,6 +134,7 @@ func (r *TCPRaft) handleConnection(conn net.Conn) {
 	}
 }
 
+// ------------------ Eleição ------------------
 func (r *TCPRaft) campaign() {
 	time.Sleep(2 * time.Second)
 	for {
@@ -139,13 +142,29 @@ func (r *TCPRaft) campaign() {
 			time.Sleep(1 * time.Second)
 			continue
 		}
+
+		// Verifica se o líder atual está respondendo (timeout de 2 segundos sem heartbeat)
 		r.mu.Lock()
-		lastLeader := r.leaderId
+		lastHb := r.lastHeartbeat
+		leaderExists := (r.leaderId != "")
 		r.mu.Unlock()
-		if lastLeader != "" {
+
+		if leaderExists && time.Since(lastHb) > 2*time.Second {
+			// líder falhou, limpa informações
+			r.mu.Lock()
+			log.Printf("[RAFT %s] Líder %s falhou (timeout), iniciando eleição", r.id, r.leaderId)
+			r.leaderId = ""
+			r.leaderRaftAddr = ""
+			r.leaderApiAddr = ""
+			r.mu.Unlock()
+			leaderExists = false
+		}
+
+		if leaderExists {
 			time.Sleep(1 * time.Second)
 			continue
 		}
+
 		log.Printf("[RAFT %s] iniciando eleição", r.id)
 		votes := 1
 		for id, addr := range r.peers {
@@ -162,6 +181,7 @@ func (r *TCPRaft) campaign() {
 			r.leaderId = r.id
 			r.leaderRaftAddr = r.addr
 			r.leaderApiAddr = r.apiAddr
+			r.lastHeartbeat = time.Now()
 			r.mu.Unlock()
 			log.Printf("[RAFT %s] tornou-se LÍDER", r.id)
 			go r.sendHeartbeats()
@@ -172,11 +192,13 @@ func (r *TCPRaft) campaign() {
 }
 
 func (r *TCPRaft) requestVote(targetAddr string) bool {
-	conn, err := net.Dial("tcp", targetAddr)
+	conn, err := net.DialTimeout("tcp", targetAddr, 1*time.Second)
 	if err != nil {
 		return false
 	}
 	defer conn.Close()
+	conn.SetDeadline(time.Now().Add(1 * time.Second))
+
 	req := map[string]interface{}{
 		"type":      "vote",
 		"candidate": r.id,
@@ -184,6 +206,7 @@ func (r *TCPRaft) requestVote(targetAddr string) bool {
 	}
 	data, _ := json.Marshal(req)
 	fmt.Fprintf(conn, "%s\n", data)
+
 	scanner := bufio.NewScanner(conn)
 	if scanner.Scan() {
 		resp := scanner.Text()
@@ -204,6 +227,7 @@ func (r *TCPRaft) handleVote(cmd map[string]interface{}, conn net.Conn) {
 	fmt.Fprintf(conn, "%s\n", data)
 }
 
+// ------------------ Heartbeat ------------------
 func (r *TCPRaft) sendHeartbeats() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -232,7 +256,7 @@ func (r *TCPRaft) sendHeartbeats() {
 }
 
 func (r *TCPRaft) sendHeartbeat(targetAddr string) {
-	conn, err := net.Dial("tcp", targetAddr)
+	conn, err := net.DialTimeout("tcp", targetAddr, 500*time.Millisecond)
 	if err != nil {
 		return
 	}
@@ -260,8 +284,10 @@ func (r *TCPRaft) handleHeartbeat(cmd map[string]interface{}) {
 	r.leaderId = leaderId
 	r.leaderRaftAddr = leaderRaftAddr
 	r.leaderApiAddr = leaderApiAddr
+	r.lastHeartbeat = time.Now() // atualiza timestamp
 }
 
+// ------------------ Replicação de comandos ------------------
 func (r *TCPRaft) AplicarTransacao(transacao *Transacao) error {
 	if !r.isLeader {
 		return fmt.Errorf("não sou líder, líder é %s (%s)", r.leaderId, r.leaderApiAddr)
@@ -296,7 +322,7 @@ func (r *TCPRaft) AplicarTransacao(transacao *Transacao) error {
 }
 
 func (r *TCPRaft) sendAppend(targetAddr, cmd string) error {
-	conn, err := net.Dial("tcp", targetAddr)
+	conn, err := net.DialTimeout("tcp", targetAddr, 500*time.Millisecond)
 	if err != nil {
 		return err
 	}
@@ -323,6 +349,7 @@ func (r *TCPRaft) handleAppend(cmd map[string]interface{}) {
 	log.Printf("[RAFT SEGUIDOR %s] ✅ Transação replicada aplicada: %s", r.id, transacao.ID)
 }
 
+// ------------------ Join ------------------
 func (r *TCPRaft) handleJoin(cmd map[string]interface{}, conn net.Conn) {
 	nodeId, _ := cmd["nodeId"].(string)
 	nodeRaftAddr, _ := cmd["nodeAddr"].(string)
@@ -364,7 +391,7 @@ func (r *TCPRaft) sendSnapshot(peerAddr string) {
 		log.Printf("[RAFT LÍDER %s] Erro serializando snapshot: %v", r.id, err)
 		return
 	}
-	conn, err := net.Dial("tcp", peerAddr)
+	conn, err := net.DialTimeout("tcp", peerAddr, 2*time.Second)
 	if err != nil {
 		log.Printf("[RAFT LÍDER %s] Falha enviar snapshot para %s: %v", r.id, peerAddr, err)
 		return
