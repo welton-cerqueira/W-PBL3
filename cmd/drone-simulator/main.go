@@ -89,7 +89,6 @@ func descobreLider() (string, error) {
 	return "", fmt.Errorf("não foi possível determinar o líder")
 }
 
-// doRequestWithRedirect envia uma requisição HTTP, seguindo redirecionamentos e redescobrindo o líder se necessário
 func doRequestWithRedirect(method, url string, body []byte) (*http.Response, error) {
 	maxTentativas := 5
 	for i := 0; i < maxTentativas; i++ {
@@ -100,13 +99,11 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 		req.Header.Set("Content-Type", "application/json")
 		client := &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse // não segue automático, tratamos manualmente
+				return http.ErrUseLastResponse
 			},
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			// Se erro de conexão, tenta descobrir novo líder
-			log.Printf("[DRONE %s] Erro de conexão com %s, tentando descobrir novo líder...", droneID, url)
 			leader, err2 := descobreLider()
 			if err2 != nil {
 				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
@@ -114,19 +111,20 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 			url = "http://" + leader + strings.TrimPrefix(url, "/")
 			continue
 		}
-		defer resp.Body.Close()
+		// Se for redirect, fecha esta resposta e tenta nova URL
 		if resp.StatusCode == http.StatusTemporaryRedirect {
 			loc := resp.Header.Get("Location")
+			resp.Body.Close()
 			if loc == "" {
 				return nil, fmt.Errorf("redirect sem location")
 			}
-			log.Printf("[DRONE %s] Redirecionando para %s", droneID, loc)
 			url = loc
 			continue
 		}
+		// Para qualquer outro status, retorna a resposta com corpo aberto
 		return resp, nil
 	}
-	return nil, fmt.Errorf("excedido número de tentativas")
+	return nil, fmt.Errorf("excedido tentativas")
 }
 
 func registrarNoBroker() {

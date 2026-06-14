@@ -82,5 +82,53 @@ func main() {
 }
 
 func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
-	// ... (igual ao seu código)
+	// Garante que o nó é líder antes de tentar aplicar transações
+	for !raftNode.EhLider() {
+		log.Println("[INICIAL] Aguardando tornar-se líder...")
+		time.Sleep(1 * time.Second)
+	}
+
+	// Aguarda a presença de pelo menos um peer (além de si mesmo) no cluster
+	// Como não temos um método direto, usamos tentativas com espera
+	log.Println("[INICIAL] Aguardando conexão com seguidores (até 10s)...")
+	time.Sleep(5 * time.Second)
+
+	maxTentativas := 5
+	for tentativa := 1; tentativa <= maxTentativas; tentativa++ {
+		transacaoA, err := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
+			CompanhiaID:   "COMP-A",
+			Valor:         100,
+			AutorizadoPor: "sistema",
+		})
+		if err != nil {
+			log.Printf("[INICIAL] Erro ao criar transação A: %v", err)
+			continue
+		}
+		if err := raftNode.AplicarTransacao(transacaoA); err != nil {
+			log.Printf("[INICIAL] Tentativa %d/%d: falha ao recarregar COMP-A: %v", tentativa, maxTentativas, err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		log.Println("[INICIAL] ✅ COMP-A recebeu 100 créditos")
+		break
+	}
+
+	for tentativa := 1; tentativa <= maxTentativas; tentativa++ {
+		transacaoB, err := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
+			CompanhiaID:   "COMP-B",
+			Valor:         50,
+			AutorizadoPor: "sistema",
+		})
+		if err != nil {
+			log.Printf("[INICIAL] Erro ao criar transação B: %v", err)
+			continue
+		}
+		if err := raftNode.AplicarTransacao(transacaoB); err != nil {
+			log.Printf("[INICIAL] Tentativa %d/%d: falha ao recarregar COMP-B: %v", tentativa, maxTentativas, err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		log.Println("[INICIAL] ✅ COMP-B recebeu 50 créditos")
+		break
+	}
 }
