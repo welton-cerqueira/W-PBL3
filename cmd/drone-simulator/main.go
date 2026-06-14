@@ -109,7 +109,17 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 			if err2 != nil {
 				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
 			}
-			url = "http://" + leader + strings.TrimPrefix(url, "/")
+			// Extrai o caminho da URL original
+			path := "/"
+			if strings.Contains(url, "/") {
+				parts := strings.SplitN(url, "/", 4)
+				if len(parts) >= 4 {
+					path = "/" + parts[3]
+				} else if len(parts) == 3 {
+					path = "/" + parts[2]
+				}
+			}
+			url = "http://" + leader + path
 			continue
 		}
 		if resp.StatusCode == http.StatusTemporaryRedirect {

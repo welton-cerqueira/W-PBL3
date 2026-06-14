@@ -105,10 +105,19 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 			if err2 != nil {
 				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
 			}
-			url = "http://" + leader + strings.TrimPrefix(url, "/")
+			// Extrai o caminho da URL original (ex: "/requisitar-drone")
+			path := "/"
+			if strings.Contains(url, "/") {
+				parts := strings.SplitN(url, "/", 4)
+				if len(parts) >= 4 {
+					path = "/" + parts[3]
+				} else if len(parts) == 3 {
+					path = "/" + parts[2]
+				}
+			}
+			url = "http://" + leader + path
 			continue
 		}
-		// Trata redirecionamento (fecha o corpo desta resposta)
 		if resp.StatusCode == http.StatusTemporaryRedirect {
 			loc := resp.Header.Get("Location")
 			resp.Body.Close()
@@ -118,7 +127,6 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 			url = loc
 			continue
 		}
-		// Para outros status, retorna a resposta com corpo ABERTO
 		return resp, nil
 	}
 	return nil, fmt.Errorf("excedido número de tentativas")
