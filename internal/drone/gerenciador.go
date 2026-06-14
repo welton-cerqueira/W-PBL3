@@ -40,7 +40,6 @@ func (g *GerenciadorDrones) RegistrarDrone(droneID, addr string) {
 		Status:      "disponivel",
 		MissaoAtual: "",
 	}
-	log.Printf("[DRONE] Drone %s registrado em %s", droneID, addr)
 }
 
 // AlocarDrone busca um drone disponível e o aloca para uma missão
