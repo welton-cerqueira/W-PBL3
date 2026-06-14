@@ -24,6 +24,8 @@ type TCPRaft struct {
 	heartbeatCh    chan bool
 	stopCh         chan struct{}
 	lastHeartbeat  time.Time // timestamp do último heartbeat recebido (seguidor)
+	currentTerm    int       // número da época (termo) atual
+	votedFor       string    // ID do nó que recebeu o voto neste termo
 }
 
 type RaftConfigTCP struct {
@@ -51,6 +53,8 @@ func NewTCPRaft(cfg RaftConfigTCP) (*TCPRaft, error) {
 		r.leaderId = cfg.NodeID
 		r.leaderRaftAddr = cfg.RaftAddr
 		r.leaderApiAddr = cfg.ApiAddr
+		r.currentTerm = 0
+		r.votedFor = ""
 		go r.sendHeartbeats()
 	} else {
 		go func() {
@@ -143,14 +147,12 @@ func (r *TCPRaft) campaign() {
 			continue
 		}
 
-		// Verifica se o líder atual está respondendo (timeout de 2 segundos sem heartbeat)
 		r.mu.Lock()
 		lastHb := r.lastHeartbeat
 		leaderExists := (r.leaderId != "")
 		r.mu.Unlock()
 
 		if leaderExists && time.Since(lastHb) > 2*time.Second {
-			// líder falhou, limpa informações
 			r.mu.Lock()
 			log.Printf("[RAFT %s] Líder %s falhou (timeout), iniciando eleição", r.id, r.leaderId)
 			r.leaderId = ""
@@ -165,16 +167,25 @@ func (r *TCPRaft) campaign() {
 			continue
 		}
 
-		log.Printf("[RAFT %s] iniciando eleição", r.id)
-		votes := 1
+		// Inicia uma nova eleição: incrementa termo e vota em si mesmo
+		r.mu.Lock()
+		r.currentTerm++
+		r.votedFor = r.id
+		meuTermo := r.currentTerm
+		r.mu.Unlock()
+
+		log.Printf("[RAFT %s] iniciando eleição para termo %d", r.id, meuTermo)
+		votes := 1 // voto próprio
+
 		for id, addr := range r.peers {
 			if id == r.id {
 				continue
 			}
-			if r.requestVote(addr) {
+			if r.requestVote(addr, meuTermo) {
 				votes++
 			}
 		}
+
 		if votes > len(r.peers)/2 {
 			r.mu.Lock()
 			r.isLeader = true
@@ -183,15 +194,17 @@ func (r *TCPRaft) campaign() {
 			r.leaderApiAddr = r.apiAddr
 			r.lastHeartbeat = time.Now()
 			r.mu.Unlock()
-			log.Printf("[RAFT %s] tornou-se LÍDER", r.id)
+			log.Printf("[RAFT %s] tornou-se LÍDER para termo %d", r.id, meuTermo)
 			go r.sendHeartbeats()
 			return
+		} else {
+			log.Printf("[RAFT %s] não obteve maioria para termo %d. Aguardando...", r.id, meuTermo)
+			time.Sleep(3 * time.Second)
 		}
-		time.Sleep(3 * time.Second)
 	}
 }
 
-func (r *TCPRaft) requestVote(targetAddr string) bool {
+func (r *TCPRaft) requestVote(targetAddr string, termo int) bool {
 	conn, err := net.DialTimeout("tcp", targetAddr, 1*time.Second)
 	if err != nil {
 		return false
@@ -202,7 +215,7 @@ func (r *TCPRaft) requestVote(targetAddr string) bool {
 	req := map[string]interface{}{
 		"type":      "vote",
 		"candidate": r.id,
-		"term":      1,
+		"term":      termo,
 	}
 	data, _ := json.Marshal(req)
 	fmt.Fprintf(conn, "%s\n", data)
@@ -220,9 +233,29 @@ func (r *TCPRaft) requestVote(targetAddr string) bool {
 }
 
 func (r *TCPRaft) handleVote(cmd map[string]interface{}, conn net.Conn) {
-	candidate := cmd["candidate"].(string)
-	log.Printf("[RAFT %s] recebido pedido de voto de %s", r.id, candidate)
-	resp := map[string]interface{}{"granted": true}
+	candidate, _ := cmd["candidate"].(string)
+	termo, _ := cmd["term"].(float64)
+	termoInt := int(termo)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	granted := false
+	if termoInt > r.currentTerm {
+		r.currentTerm = termoInt
+		r.votedFor = ""
+		r.isLeader = false
+		r.leaderId = ""
+	}
+	if (r.votedFor == "" || r.votedFor == candidate) && termoInt >= r.currentTerm {
+		r.votedFor = candidate
+		granted = true
+		log.Printf("[RAFT %s] concedeu voto para %s no termo %d", r.id, candidate, termoInt)
+	} else {
+		log.Printf("[RAFT %s] recusou voto para %s (termo atual %d)", r.id, candidate, r.currentTerm)
+	}
+
+	resp := map[string]interface{}{"granted": granted}
 	data, _ := json.Marshal(resp)
 	fmt.Fprintf(conn, "%s\n", data)
 }
@@ -261,11 +294,17 @@ func (r *TCPRaft) sendHeartbeat(targetAddr string) {
 		return
 	}
 	defer conn.Close()
+
+	r.mu.RLock()
+	termo := r.currentTerm
+	r.mu.RUnlock()
+
 	req := map[string]interface{}{
 		"type":           "heartbeat",
 		"leader":         r.id,
 		"leaderRaftAddr": r.addr,
 		"leaderApiAddr":  r.apiAddr,
+		"term":           termo,
 	}
 	data, _ := json.Marshal(req)
 	fmt.Fprintf(conn, "%s\n", data)
@@ -275,16 +314,21 @@ func (r *TCPRaft) handleHeartbeat(cmd map[string]interface{}) {
 	leaderId, _ := cmd["leader"].(string)
 	leaderRaftAddr, _ := cmd["leaderRaftAddr"].(string)
 	leaderApiAddr, _ := cmd["leaderApiAddr"].(string)
+	termo, _ := cmd["term"].(float64) // NOVO
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if termoInt := int(termo); termoInt > r.currentTerm {
+		r.currentTerm = termoInt
+		r.votedFor = ""
+	}
 	if r.isLeader && leaderId != r.id {
 		r.isLeader = false
 	}
 	r.leaderId = leaderId
 	r.leaderRaftAddr = leaderRaftAddr
 	r.leaderApiAddr = leaderApiAddr
-	r.lastHeartbeat = time.Now() // atualiza timestamp
+	r.lastHeartbeat = time.Now()
 }
 
 // ------------------ Replicação de comandos ------------------
