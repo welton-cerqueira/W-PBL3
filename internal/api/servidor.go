@@ -39,7 +39,7 @@ func NovoServidorAPI(porta string, raftNode *consenso.TCPRaft, droneManager *dro
 
 // Iniciar inicia o servidor HTTP
 func (s *ServidorAPI) Iniciar() error {
-	return s.app.Listen(":" + s.porta)
+	return s.app.Listen(s.porta)
 }
 
 // RegistrarRotas registra todas as rotas da API
