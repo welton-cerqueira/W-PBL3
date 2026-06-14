@@ -16,14 +16,15 @@ import (
 )
 
 var (
-	droneID     string
-	addr        string // endereço completo (ex: "192.168.1.20:9001")
-	brokerList  string // lista de brokers: "broker1=192.168.1.10:8080,broker2=..."
-	brokers     map[string]string
-	registrado  bool
-	emMissao    bool
-	missaoAtual string
-	rotaAtual   string
+	droneID         string
+	addr            string // endereço completo (ex: "192.168.1.20:9001")
+	brokerList      string // lista de brokers: "broker1=192.168.1.10:8080,broker2=..."
+	brokers         map[string]string
+	registrado      bool
+	emMissao        bool
+	missaoAtual     string
+	rotaAtual       string
+	ultimoLiderAddr string // armazena o último líder conhecido
 )
 
 func main() {
@@ -56,12 +57,35 @@ func main() {
 	// Iniciar servidor HTTP para receber missões
 	go iniciarServidorHTTP()
 
+	// Iniciar monitoramento de líder (re-registro automático)
+	go monitorarLider()
+
 	// Aguardar sinal de término
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 
 	log.Printf("[DRONE %s] Encerrando...", droneID)
+}
+
+// monitorarLider verifica periodicamente se o líder mudou e, se sim, reregistra o drone
+func monitorarLider() {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	for range ticker.C {
+		if !registrado {
+			continue
+		}
+		leader, err := descobreLider()
+		if err != nil {
+			log.Printf("[DRONE %s] Erro ao descobrir líder para monitoramento: %v", droneID, err)
+			continue
+		}
+		if leader != ultimoLiderAddr {
+			log.Printf("[DRONE %s] Líder mudou de %s para %s. Re-registrando...", droneID, ultimoLiderAddr, leader)
+			registrarNoBroker()
+		}
+	}
 }
 
 // descobreLider consulta todos os brokers até encontrar o líder atual
@@ -73,18 +97,17 @@ func descobreLider() (string, error) {
 			log.Printf("[DRONE %s] Broker %s (%s) indisponível: %v", droneID, id, urlBase, err)
 			continue
 		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			continue
-		}
+		// Leitura do corpo
 		var leaderInfo struct {
 			LeaderID   string `json:"leader_id"`
 			LeaderAddr string `json:"leader_addr"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&leaderInfo); err == nil && leaderInfo.LeaderAddr != "" {
+			resp.Body.Close()
 			log.Printf("[DRONE %s] Líder atual: %s (%s)", droneID, leaderInfo.LeaderID, leaderInfo.LeaderAddr)
 			return leaderInfo.LeaderAddr, nil
 		}
+		resp.Body.Close()
 	}
 	return "", fmt.Errorf("não foi possível determinar o líder")
 }
@@ -159,6 +182,7 @@ func registrarNoBroker() {
 	if resp.StatusCode == http.StatusOK {
 		log.Printf("[DRONE %s] ✅ Registrado com sucesso no líder %s", droneID, leaderAddr)
 		registrado = true
+		ultimoLiderAddr = leaderAddr
 	} else {
 		log.Printf("[DRONE %s] ❌ Registro recusado, status %d", droneID, resp.StatusCode)
 	}
