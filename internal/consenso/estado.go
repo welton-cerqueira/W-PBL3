@@ -44,7 +44,10 @@ func (e *EstadoLedger) AplicarTransacao(transacao *Transacao) error {
 		if err := json.Unmarshal(transacao.Dados, &dados); err != nil {
 			return err
 		}
+
+		log.Printf("[RECARGA] Antes: %s saldo = %d", dados.CompanhiaID, e.Saldos[dados.CompanhiaID])
 		e.Saldos[dados.CompanhiaID] += dados.Valor
+		log.Printf("[RECARGA] Depois: %s saldo = %d", dados.CompanhiaID, e.Saldos[dados.CompanhiaID])
 
 	case TipoPagamento:
 		var dados DadosPagamento

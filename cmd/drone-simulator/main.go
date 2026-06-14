@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -26,6 +28,7 @@ var (
 	rotaAtual            string
 	ultimoLiderAddr      string // armazena o último líder conhecido
 	missaoAtualCompanhia string
+	ultimoHash           string
 )
 
 func main() {
@@ -71,7 +74,7 @@ func main() {
 
 // monitorarLider verifica periodicamente se o líder mudou e, se sim, reregistra o drone
 func monitorarLider() {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
 		if !registrado {
@@ -269,6 +272,10 @@ func enviarLaudo() {
 	inicio := time.Now().Unix() - int64(5+rand.Intn(10))
 	fim := time.Now().Unix()
 
+	// Usa o último hash registrado como hash_anterior
+	hashAnterior := ultimoHash
+
+	// Prepara o laudo com os dados (ainda sem hash_verificacao real)
 	laudo := map[string]interface{}{
 		"id_requisicao":    missaoAtual,
 		"drone_id":         droneID,
@@ -279,12 +286,20 @@ func enviarLaudo() {
 		"incidentes":       incidentes,
 		"data_hora_inicio": inicio,
 		"data_hora_fim":    fim,
-		"hash_anterior":    "",
-		"hash_verificacao": gerarHash(missaoAtual),
+		"hash_anterior":    hashAnterior,
+		"hash_verificacao": "", // será preenchido após cálculo
 	}
+
+	// Calcula o hash SHA256 do laudo (inclui todos os campos, inclusive hash_anterior)
+	laudoJSON, _ := json.Marshal(laudo)
+	hash := sha256.Sum256(laudoJSON)
+	hashReal := hex.EncodeToString(hash[:])
+	laudo["hash_verificacao"] = hashReal
+
+	// Serializa novamente com o hash calculado
 	jsonData, _ := json.Marshal(laudo)
 
-	log.Printf("[DRONE %s] 📤 Enviando laudo para missão %s...", droneID, missaoAtual)
+	log.Printf("[DRONE %s] 📤 Enviando laudo para missão %s (hash_anterior: %.8s)", droneID, missaoAtual, hashAnterior)
 
 	// Descobre líder atual antes de enviar
 	leaderAddr, err := descobreLider()
@@ -310,6 +325,8 @@ func enviarLaudo() {
 			if len(incidentes) > 0 {
 				log.Printf("[DRONE %s] ⚠️ Incidentes: %v", droneID, incidentes)
 			}
+			// Atualiza o último hash para o próximo laudo
+			ultimoHash = hashReal
 		} else {
 			log.Printf("[DRONE %s] ❌ Falha ao enviar laudo. Status: %d", droneID, resp.StatusCode)
 		}
@@ -324,4 +341,11 @@ func gerarHash(s string) string {
 		return "hash_" + time.Now().Format("150405") + "_" + s
 	}
 	return "hash_" + time.Now().Format("150405") + "_" + s[:8]
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
