@@ -2,10 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	"W-PBL3/internal/api"
 	"W-PBL3/internal/consenso"
@@ -13,60 +16,57 @@ import (
 )
 
 func main() {
-	// Parâmetros de linha de comando
 	var (
-		id        = flag.String("id", "broker1", "ID do broker (ex: broker1, broker2, broker3)")
-		porta     = flag.String("porta", "8080", "Porta HTTP do broker")
-		ehLider   = flag.Bool("lider", false, "Se true, este broker inicia como líder")
-		outrosNos = flag.String("outros", "", "IDs dos outros brokers separados por vírgula (ex: broker2,broker3)")
+		id        = flag.String("id", "broker1", "ID do broker")
+		portaAPI  = flag.String("porta", "8080", "Porta HTTP")
+		ehLider   = flag.Bool("lider", false, "Inicia como líder (bootstrap)")
+		outrosNos = flag.String("outros", "", "IDs dos outros brokers (ex: broker2,broker3)")
 	)
 	flag.Parse()
 
-	log.Printf("[INICIO] Iniciando broker %s na porta %s", *id, *porta)
+	peers := make(map[string]string)
+	peers[*id] = getRaftAddr(*id)
 
-	// 1. Inicializa o estado do ledger
-	estado := consenso.NovoEstadoLedger()
-
-	// 2. Configura nós Raft (simplificado)
-	// Em uma implementação real, isso se comunicaria com outros brokers
-	var listaOutros []string
 	if *outrosNos != "" {
-		// Aqui você implementaria a lógica para se conectar aos outros nós
-		listaOutros = []string{} // Placeholder
+		for _, outroID := range strings.Split(*outrosNos, ",") {
+			outroID = strings.TrimSpace(outroID)
+			if outroID == "" {
+				continue
+			}
+			peers[outroID] = getRaftAddr(outroID)
+		}
 	}
 
-	raftNode := consenso.NovoNoRaft(*id, estado, listaOutros)
-
-	// Define se este nó é líder ou seguidor
-	if *ehLider {
-		raftNode.TornarLider()
-	} else {
-		// Em produção, descobriria o líder automaticamente
-		raftNode.TornarSeguidor("broker1")
+	cfg := consenso.RaftConfigTCP{
+		NodeID:    *id,
+		RaftAddr:  peers[*id],
+		Peers:     peers,
+		Bootstrap: *ehLider,
 	}
 
-	// 3. Inicializa o gerenciador de drones
+	raftNode, err := consenso.NewTCPRaft(cfg)
+	if err != nil {
+		log.Fatalf("[ERRO] Falha ao criar nó Raft: %v", err)
+	}
+	defer raftNode.Close()
+
 	droneManager := drone.NovoGerenciadorDrones()
-
-	// 4. Inicializa o servidor API
-	servidor := api.NovoServidorAPI(*porta, estado, raftNode, droneManager)
+	servidor := api.NovoServidorAPI(*portaAPI, raftNode, droneManager) // assinatura ajustada
 	servidor.RegistrarRotas()
 
-	// 5. Adiciona créditos iniciais para as companhias (somente se for o líder)
 	if *ehLider {
-		adicionarCreditosIniciais(estado, raftNode)
+		time.Sleep(5 * time.Second)
+		aplicarCreditosIniciais(raftNode)
 	}
 
-	// 6. Inicia o servidor em uma goroutine
 	go func() {
 		if err := servidor.Iniciar(); err != nil {
 			log.Fatalf("[ERRO] Falha ao iniciar servidor: %v", err)
 		}
 	}()
 
-	log.Printf("[SUCESSO] Broker %s rodando em http://localhost:%s", *id, *porta)
+	log.Printf("[SUCESSO] Broker %s rodando. API: http://localhost:%s, Raft: %s", *id, *portaAPI, peers[*id])
 
-	// 7. Aguarda sinal de término
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
@@ -74,29 +74,38 @@ func main() {
 	log.Println("[FIM] Encerrando broker...")
 }
 
-// adicionarCreditosIniciais adiciona créditos para as companhias de teste
-func adicionarCreditosIniciais(estado *consenso.EstadoLedger, raftNode *consenso.NoRaft) {
-	// Companhia A: 100 créditos
-	dadosRecargaA := consenso.DadosRecarga{
+func getRaftAddr(id string) string {
+	var num int
+	for i := len(id) - 1; i >= 0; i-- {
+		if id[i] >= '0' && id[i] <= '9' {
+			num = num*10 + int(id[i]-'0')
+		} else {
+			break
+		}
+	}
+	if num == 0 {
+		num = 1
+	}
+	return fmt.Sprintf("127.0.0.1:%d", 7000+(num-1))
+}
+
+func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
+	transacaoA, _ := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
 		CompanhiaID:   "COMP-A",
 		Valor:         100,
 		AutorizadoPor: "sistema",
-	}
-	transacaoA, _ := consenso.NovaTransacao(consenso.TipoRecarga, dadosRecargaA)
-	if err := estado.AplicarTransacao(transacaoA); err != nil {
+	})
+	if err := raftNode.AplicarTransacao(transacaoA); err != nil {
 		log.Printf("[AVISO] Erro ao recarregar COMP-A: %v", err)
 	}
 
-	// Companhia B: 50 créditos
-	dadosRecargaB := consenso.DadosRecarga{
+	transacaoB, _ := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
 		CompanhiaID:   "COMP-B",
 		Valor:         50,
 		AutorizadoPor: "sistema",
-	}
-	transacaoB, _ := consenso.NovaTransacao(consenso.TipoRecarga, dadosRecargaB)
-	if err := estado.AplicarTransacao(transacaoB); err != nil {
+	})
+	if err := raftNode.AplicarTransacao(transacaoB); err != nil {
 		log.Printf("[AVISO] Erro ao recarregar COMP-B: %v", err)
 	}
-
-	log.Println("[INICIAL] Créditos iniciais adicionados: COMP-A=100, COMP-B=50")
+	log.Println("[INICIAL] Créditos iniciais aplicados via Raft")
 }

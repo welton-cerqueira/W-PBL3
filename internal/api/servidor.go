@@ -9,24 +9,21 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
-// ServidorAPI representa o servidor HTTP do broker
 type ServidorAPI struct {
 	app          *fiber.App
 	porta        string
 	estado       *consenso.EstadoLedger
-	raftNode     *consenso.NoRaft
+	raftNode     *consenso.TCPRaft // ANTES era *consenso.NoRaft
 	droneManager *drone.GerenciadorDrones
-	drones       map[string]string // ADICIONAR ESTA LINHA: ID do drone -> porta
+	drones       map[string]string
 }
 
-// NovoServidorAPI cria um novo servidor HTTP
-func NovoServidorAPI(porta string, estado *consenso.EstadoLedger, raftNode *consenso.NoRaft, droneManager *drone.GerenciadorDrones) *ServidorAPI {
+func NovoServidorAPI(porta string, raftNode *consenso.TCPRaft, droneManager *drone.GerenciadorDrones) *ServidorAPI {
+	estado := raftNode.ObterEstado()
 	app := fiber.New(fiber.Config{
 		ServerHeader: "W-PBL3",
 		AppName:      "W-PBL3 Broker",
 	})
-
-	// Middlewares
 	app.Use(logger.New())
 	app.Use(cors.New())
 
@@ -36,7 +33,7 @@ func NovoServidorAPI(porta string, estado *consenso.EstadoLedger, raftNode *cons
 		estado:       estado,
 		raftNode:     raftNode,
 		droneManager: droneManager,
-		drones:       make(map[string]string), // ADICIONAR ESTA LINHA
+		drones:       make(map[string]string),
 	}
 }
 

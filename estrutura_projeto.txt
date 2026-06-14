@@ -1,0 +1,2443 @@
+Gerando documentação do projeto...
+Gerado em: Sun Jun 14 00:13:49 -03 2026
+=========================================
+
+### ARQUITETURA DO PROJETO ###
+-----------------------------------------
+.
+├── Dockerfile.broker
+├── Dockerfile.company
+├── Dockerfile.drone
+├── cmd
+│   ├── broker
+│   │   └── main.go
+│   ├── company
+│   │   └── main.go
+│   └── drone-simulator
+│       └── main.go
+├── companhias
+│   └── cliente.go
+├── docker-compose.yml
+├── dockerfile
+├── documentar.sh
+├── drones
+│   └── main.go
+├── estrutura_projeto.txt
+├── go.mod
+├── go.sum
+├── internal
+│   ├── api
+│   │   ├── rotas.go
+│   │   └── servidor.go
+│   ├── consenso
+│   │   ├── estado.go
+│   │   ├── tcp_raft.go
+│   │   └── transacao.go
+│   └── drone
+│       ├── cliente.go
+│       └── gerenciador.go
+├── logs
+│   ├── broker_broker1.log
+│   ├── broker_broker2.log
+│   ├── broker_broker3.log
+│   ├── broker_broker4.log
+│   ├── company_COMP-A.log
+│   ├── company_COMP-B.log
+│   ├── drone_drone1.log
+│   ├── drone_drone2.log
+│   ├── drone_drone3.log
+│   ├── drone_drone4.log
+│   ├── drone_drone5.log
+│   ├── drone_drone6.log
+│   ├── drone_drone7.log
+│   └── drone_drone8.log
+├── monitorar.sh
+├── pkg
+│   └── modelos
+│       ├── companhia.go
+│       ├── laudo.go
+│       └── requisicao.go
+├── run.sh
+└── run_local.sh
+
+14 directories, 41 files
+
+=========================================
+
+### CONTEÚDO DOS ARQUIVOS ###
+-----------------------------------------
+
+[./go.sum]
+-----------------------------------------
+github.com/andybalholm/brotli v1.1.0 h1:eLKJA0d02Lf0mVpIDgYnqXcUn0GqVmEFny3VuID1U3M=
+github.com/andybalholm/brotli v1.1.0/go.mod h1:sms7XGricyQI9K10gOSf56VKKWS4oLer58Q+mhRPtnY=
+github.com/gofiber/fiber/v2 v2.52.13 h1:TOKP64iqC9b5P49VrBW5tHhUOvDyrtJ0xePEfzJbCbk=
+github.com/gofiber/fiber/v2 v2.52.13/go.mod h1:YEcBbO/FB+5M1IZNBP9FO3J9281zgPAreiI1oqg8nDw=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/klauspost/compress v1.17.9 h1:6KIumPrER1LHsvBVuDa0r5xaG0Es51mhhB9BQB2qeMA=
+github.com/klauspost/compress v1.17.9/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
+github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
+github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
+github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
+github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
+github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
+github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6TULQc=
+github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
+github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
+github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
+github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=
+github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
+github.com/valyala/fasthttp v1.51.0 h1:8b30A5JlZ6C7AS81RsWjYMQmrZG6feChmgAolCl1SqA=
+github.com/valyala/fasthttp v1.51.0/go.mod h1:oI2XroL+lI7vdXyYoQk03bXBThfFl2cVdIA3Xl7cH8g=
+github.com/valyala/tcplisten v1.0.0 h1:rBHj/Xf+E1tRGZyWIWwJDiRY0zc1Js+CV5DqwacVSA8=
+github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
+golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.28.0 h1:Fksou7UEQUWlKvIdsqzJmUmCX3cZuD2+P3XyyzwMhlA=
+golang.org/x/sys v0.28.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+
+
+
+[./drones/main.go]
+-----------------------------------------
+package main
+
+import (
+	"flag"
+	"log"
+	"time"
+
+	"W-PBL3/pkg/modelos"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+var (
+	droneID   string
+	porta     string
+	brokerURL string
+)
+
+func main() {
+	flag.StringVar(&droneID, "id", "drone1", "ID do drone")
+	flag.StringVar(&porta, "porta", "9001", "Porta do drone")
+	flag.StringVar(&brokerURL, "broker", "http://localhost:8080", "URL do broker")
+	flag.Parse()
+
+	app := fiber.New()
+
+	// Endpoint para receber missões
+	app.Post("/iniciar-missao", func(c *fiber.Ctx) error {
+		var req struct {
+			IDRequisicao string `json:"id_requisicao"`
+			Rota         string `json:"rota"`
+			DroneID      string `json:"drone_id"`
+		}
+
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"erro": "Requisição inválida"})
+		}
+
+		log.Printf("[DRONE %s] Missão recebida: Rota %s (ID: %s)",
+			droneID, req.Rota, req.IDRequisicao)
+
+		// Simula execução da missão
+		go executarMissao(req.IDRequisicao, req.Rota)
+
+		return c.JSON(fiber.Map{"status": "missão iniciada"})
+	})
+
+	// Registra o drone no broker
+	registrarNoBroker()
+
+	// Inicia o servidor
+	log.Printf("[DRONE %s] Iniciando na porta %s", droneID, porta)
+	log.Fatal(app.Listen(":" + porta))
+}
+
+func registrarNoBroker() {
+	// Em produção, isso seria uma requisição HTTP para o broker
+	log.Printf("[DRONE %s] Registrado no broker %s", droneID, brokerURL)
+}
+
+func executarMissao(idRequisicao, rota string) {
+	log.Printf("[DRONE %s] Executando missão na rota %s...", droneID, rota)
+
+	// Simula o tempo de voo
+	time.Sleep(5 * time.Second)
+
+	// Cria o laudo
+	laudo := modelos.NovoLaudoMissao(idRequisicao, droneID, rota, modelos.ResultadoSucesso)
+	laudo.AdicionarObstaculo("Detectado congestionamento leve")
+	laudo.AdicionarIncidente("Comunicação instável por 2 segundos")
+	laudo.FinalizarLaudo()
+
+	// Envia laudo para o broker
+	enviarLaudoParaBroker(laudo)
+}
+
+func enviarLaudoParaBroker(laudo *modelos.LaudoMissao) {
+	// Simula envio via HTTP para o broker
+	log.Printf("[DRONE %s] Enviando laudo da missão %s para broker",
+		droneID, laudo.IDRequisicao)
+
+	// Na implementação real, faria uma requisição HTTP POST
+	// para http://localhost:8080/drone/relatar-missao
+
+	log.Printf("[DRONE %s] Laudo enviado: %s", droneID, laudo.Resultado)
+}
+
+
+
+[./internal/api/rotas.go]
+-----------------------------------------
+package api
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+
+	"W-PBL3/internal/consenso"
+	"W-PBL3/pkg/modelos"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+// Estrutura para armazenar informações do drone
+type DroneInfo struct {
+	ID    string
+	Porta string
+}
+
+// healthCheck verifica se o broker está vivo
+func (s *ServidorAPI) healthCheck(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{
+		"status": "online",
+		"lider":  s.raftNode.EhLider(),
+		"porta":  s.porta,
+	})
+}
+
+// consultarSaldo retorna o saldo de uma companhia
+func (s *ServidorAPI) consultarSaldo(c *fiber.Ctx) error {
+	companhiaID := c.Params("companhia_id")
+	saldo := s.estado.ObterSaldo(companhiaID)
+
+	return c.JSON(fiber.Map{
+		"companhia_id": companhiaID,
+		"saldo":        saldo,
+	})
+}
+
+// consultarHistorico retorna todo o histórico do ledger
+func (s *ServidorAPI) consultarHistorico(c *fiber.Ctx) error {
+	historico := s.estado.ObterHistorico()
+	return c.JSON(fiber.Map{
+		"total_transacoes": len(historico),
+		"historico":        historico,
+	})
+}
+
+// listarMissoes lista todas as missões registradas
+func (s *ServidorAPI) listarMissoes(c *fiber.Ctx) error {
+	missoes := s.droneManager.ListarMissoesAtivas()
+	return c.JSON(fiber.Map{
+		"total_missoes": len(missoes),
+		"missoes":       missoes,
+	})
+}
+
+// requisitarDrone é o endpoint principal para companhias solicitarem drones
+func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
+	var req struct {
+		CompanhiaID string `json:"companhia_id"`
+		Rota        string `json:"rota"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"erro": "Requisição inválida"})
+	}
+
+	// Verifica se o nó atual é o líder
+	if !s.raftNode.EhLider() {
+		return c.Status(503).JSON(fiber.Map{
+			"erro":  "Este não é o nó líder",
+			"lider": s.raftNode.ObterLiderID(),
+		})
+	}
+
+	// Cria requisição
+	requisicao := modelos.NovaRequisicaoEscolta(req.CompanhiaID, req.Rota)
+
+	// Cria transação de pagamento (custo fixo de 10 créditos)
+	dadosPagamento := consenso.DadosPagamento{
+		DeCompanhiaID:   req.CompanhiaID,
+		ParaCompanhiaID: "sistema",
+		Valor:           10,
+		Motivo:          "requisicao_drone",
+		IDRequisicao:    requisicao.IDRequisicao,
+	}
+
+	transacao, err := consenso.NovaTransacao(consenso.TipoPagamento, dadosPagamento)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao criar transação"})
+	}
+
+	// Aplica a transação via Raft
+	if err := s.raftNode.AplicarTransacao(transacao); err != nil {
+		if err.Error() == "saldo insuficiente" {
+			return c.Status(402).JSON(fiber.Map{
+				"erro":   "Saldo insuficiente",
+				"status": "negada",
+			})
+		}
+		return c.Status(500).JSON(fiber.Map{"erro": err.Error()})
+	}
+
+	// Pagamento confirmado! Alocar um drone
+	droneID, err := s.droneManager.AlocarDrone(requisicao.IDRequisicao, req.Rota)
+	if err != nil {
+		log.Printf("Erro ao alocar drone: %v", err)
+		return c.Status(500).JSON(fiber.Map{
+			"erro":   "Nenhum drone disponível",
+			"status": "pendente",
+		})
+	}
+
+	requisicao.DroneID = droneID
+	requisicao.Status = modelos.StatusAprovada
+
+	go s.notificarDrone(droneID, requisicao.IDRequisicao, req.Rota)
+
+	return c.JSON(fiber.Map{
+		"status":             "aprovada",
+		"id_requisicao":      requisicao.IDRequisicao,
+		"drone_id":           droneID,
+		"creditos_debitados": 10,
+		"saldo_restante":     s.estado.ObterSaldo(req.CompanhiaID),
+	})
+
+}
+
+// recarregarCreditos adiciona créditos a uma companhia (apenas para testes)
+func (s *ServidorAPI) recarregarCreditos(c *fiber.Ctx) error {
+	var req struct {
+		CompanhiaID string `json:"companhia_id"`
+		Valor       int    `json:"valor"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"erro": "Requisição inválida"})
+	}
+
+	if !s.raftNode.EhLider() {
+		return c.Status(503).JSON(fiber.Map{"erro": "Este não é o nó líder"})
+	}
+
+	dadosRecarga := consenso.DadosRecarga{
+		CompanhiaID:   req.CompanhiaID,
+		Valor:         req.Valor,
+		AutorizadoPor: "admin",
+	}
+
+	transacao, err := consenso.NovaTransacao(consenso.TipoRecarga, dadosRecarga)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao criar transação"})
+	}
+
+	if err := s.raftNode.AplicarTransacao(transacao); err != nil {
+		return c.Status(500).JSON(fiber.Map{"erro": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"status":     "recarga realizada",
+		"novo_saldo": s.estado.ObterSaldo(req.CompanhiaID),
+	})
+}
+
+// relatarMissao recebe o laudo de um drone
+func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
+	var laudo modelos.LaudoMissao
+	if err := c.BodyParser(&laudo); err != nil {
+		return c.Status(400).JSON(fiber.Map{"erro": "Laudo inválido: " + err.Error()})
+	}
+
+	log.Printf("[LAUDO] Recebido laudo para missão: %s", laudo.IDRequisicao)
+	log.Printf("[LAUDO] Drone: %s, Resultado: %s", laudo.DroneID, laudo.Resultado)
+
+	// Verificação de hash desabilitada (conforme combinado)
+	/*
+	   if !laudo.VerificarIntegridade() {
+	       log.Printf("[ALERTA] Laudo com hash inválido detectado!")
+	       return c.Status(409).JSON(fiber.Map{
+	           "erro":   "Laudo adulterado detectado!",
+	           "status": "rejeitado",
+	       })
+	   }
+	*/
+
+	if !s.raftNode.EhLider() {
+		return c.Status(503).JSON(fiber.Map{
+			"erro":  "Este não é o nó líder",
+			"lider": s.raftNode.ObterLiderID(),
+		})
+	}
+
+	// --- Buscar a companhia associada a esta requisição ---
+	var companhiaID string
+	historico := s.estado.ObterHistorico()
+	for _, tx := range historico {
+		if tx.Tipo == consenso.TipoPagamento {
+			var dadosPagamento consenso.DadosPagamento
+			if err := json.Unmarshal(tx.Dados, &dadosPagamento); err == nil {
+				if dadosPagamento.IDRequisicao == laudo.IDRequisicao {
+					companhiaID = dadosPagamento.DeCompanhiaID
+					break
+				}
+			}
+		}
+	}
+
+	// Se não encontrou, usa um fallback (apenas para não quebrar)
+	if companhiaID == "" {
+		companhiaID = "desconhecida"
+		log.Printf("[LAUDO] ⚠️ Não foi possível identificar a companhia para a missão %s", laudo.IDRequisicao)
+	}
+
+	// Registra o laudo como transação no ledger
+	dadosLaudo := consenso.DadosLaudo{
+		IDRequisicao:   laudo.IDRequisicao,
+		DroneID:        laudo.DroneID,
+		Rota:           laudo.Rota,
+		Resultado:      laudo.Resultado,
+		Obstaculos:     laudo.Obstaculos,
+		Incidentes:     laudo.Incidentes,
+		DataHoraInicio: laudo.DataHoraInicio,
+		DataHoraFim:    laudo.DataHoraFim,
+		Hash:           laudo.HashVerificacao,
+		HashAnterior:   laudo.HashAnterior,
+	}
+
+	transacao, err := consenso.NovaTransacao(consenso.TipoLaudo, dadosLaudo)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao criar transação: " + err.Error()})
+	}
+
+	if err := s.raftNode.AplicarTransacao(transacao); err != nil {
+		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao aplicar transação: " + err.Error()})
+	}
+
+	// Libera o drone
+	s.droneManager.LiberarDrone(laudo.DroneID)
+	log.Printf("[DRONE] Drone %s liberado após missão %s", laudo.DroneID, laudo.IDRequisicao)
+
+	// --- Exibir conteúdo detalhado do laudo e total de tokens (créditos) da companhia ---
+	saldo := s.estado.ObterSaldo(companhiaID)
+
+	log.Printf("========== LAUDO COMPLETO ==========")
+	log.Printf("ID Requisição: %s", laudo.IDRequisicao)
+	log.Printf("Drone: %s", laudo.DroneID)
+	log.Printf("Rota: %s", laudo.Rota)
+	log.Printf("Resultado: %s", laudo.Resultado)
+	if len(laudo.Obstaculos) > 0 {
+		log.Printf("Obstáculos: %v", laudo.Obstaculos)
+	} else {
+		log.Printf("Obstáculos: nenhum")
+	}
+	if len(laudo.Incidentes) > 0 {
+		log.Printf("Incidentes: %v", laudo.Incidentes)
+	} else {
+		log.Printf("Incidentes: nenhum")
+	}
+	log.Printf("Início: %d | Fim: %d", laudo.DataHoraInicio, laudo.DataHoraFim)
+	log.Printf("Hash: %s", laudo.HashVerificacao)
+	log.Printf("Hash Anterior: %s", laudo.HashAnterior)
+	log.Printf("Total de tokens (créditos) da companhia %s: %d", companhiaID, saldo)
+	log.Printf("====================================")
+
+	return c.JSON(fiber.Map{
+		"status":          "laudo registrado com sucesso",
+		"id_requisicao":   laudo.IDRequisicao,
+		"drone_liberado":  true,
+		"saldo_companhia": saldo,
+	})
+}
+
+func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
+	var req struct {
+		DroneID string `json:"drone_id"`
+		Porta   string `json:"porta"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"erro": "Requisição inválida"})
+	}
+
+	// Armazenar informações do drone
+	s.droneManager.RegistrarDrone(req.DroneID, req.Porta)
+
+	// Armazenar porta para notificação
+	if s.drones == nil {
+		s.drones = make(map[string]string)
+	}
+	s.drones[req.DroneID] = req.Porta
+
+	log.Printf("[DRONE] Drone %s registrado na porta %s", req.DroneID, req.Porta)
+	return c.JSON(fiber.Map{"status": "drone registrado", "drone_id": req.DroneID})
+}
+
+// Função para notificar drone via HTTP
+func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota string) {
+	// Obter porta do drone
+	porta, existe := s.drones[droneID]
+	if !existe {
+		log.Printf("[BROKER] ❌ Drone %s não encontrado no registro", droneID)
+		return
+	}
+
+	// Preparar payload
+	payload := map[string]interface{}{
+		"id_requisicao": idRequisicao,
+		"drone_id":      droneID,
+		"rota":          rota,
+	}
+	jsonData, _ := json.Marshal(payload)
+
+	// Fazer requisição HTTP para o drone
+	url := fmt.Sprintf("http://localhost:%s/iniciar-missao", porta)
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[BROKER] ❌ Erro ao notificar drone %s: %v", droneID, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		log.Printf("[BROKER] ✅ Drone %s notificado para missão %s", droneID, idRequisicao)
+	} else {
+		log.Printf("[BROKER] ⚠️ Drone %s respondeu com status %d", droneID, resp.StatusCode)
+	}
+}
+
+// verificarCadeiaLaudos verifica a integridade da cadeia de laudos
+func (s *ServidorAPI) verificarCadeiaLaudos(c *fiber.Ctx) error {
+	integro, mensagem := s.estado.VerificarCadeiaLaudos()
+
+	// Contagem segura de laudos
+	totalLaudos := 0
+	historico := s.estado.ObterHistorico()
+	for _, t := range historico {
+		if t.Tipo == consenso.TipoLaudo {
+			totalLaudos++
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"cadeia_integra": integro,
+		"mensagem":       mensagem,
+		"total_laudos":   totalLaudos,
+	})
+}
+
+// statusDrone retorna o status atual dos drones (para debug)
+func (s *ServidorAPI) statusDrone(c *fiber.Ctx) error {
+	drones := s.droneManager.ListarDrones()
+	return c.JSON(fiber.Map{
+		"drones": drones,
+		"total":  len(drones),
+		"portas": s.drones,
+	})
+}
+
+// liberarDrone endpoint manual para liberar um drone (apenas para debug)
+func (s *ServidorAPI) liberarDrone(c *fiber.Ctx) error {
+	var req struct {
+		DroneID string `json:"drone_id"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"erro": "Requisição inválida"})
+	}
+
+	s.droneManager.LiberarDrone(req.DroneID)
+	return c.JSON(fiber.Map{
+		"status":   "drone liberado",
+		"drone_id": req.DroneID,
+	})
+}
+
+// receberComandoRaft recebe comandos de outros nós (replicação)
+func (s *ServidorAPI) receberComandoRaft(c *fiber.Ctx) error {
+	var transacao consenso.Transacao
+	if err := c.BodyParser(&transacao); err != nil {
+		return c.Status(400).JSON(fiber.Map{"erro": "Transação inválida"})
+	}
+
+	if err := s.estado.AplicarTransacao(&transacao); err != nil {
+		return c.Status(500).JSON(fiber.Map{"erro": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"status": "ok"})
+}
+
+// obterEstatisticasLaudos retorna estatísticas dos laudos
+func (s *ServidorAPI) obterEstatisticasLaudos(c *fiber.Ctx) error {
+	estatisticas := s.estado.ObterEstatisticasLaudos()
+	return c.JSON(estatisticas)
+}
+
+
+
+[./internal/api/servidor.go]
+-----------------------------------------
+package api
+
+import (
+	"W-PBL3/internal/consenso"
+	"W-PBL3/internal/drone"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+)
+
+type ServidorAPI struct {
+	app          *fiber.App
+	porta        string
+	estado       *consenso.EstadoLedger
+	raftNode     *consenso.TCPRaft // ANTES era *consenso.NoRaft
+	droneManager *drone.GerenciadorDrones
+	drones       map[string]string
+}
+
+func NovoServidorAPI(porta string, raftNode *consenso.TCPRaft, droneManager *drone.GerenciadorDrones) *ServidorAPI {
+	estado := raftNode.ObterEstado()
+	app := fiber.New(fiber.Config{
+		ServerHeader: "W-PBL3",
+		AppName:      "W-PBL3 Broker",
+	})
+	app.Use(logger.New())
+	app.Use(cors.New())
+
+	return &ServidorAPI{
+		app:          app,
+		porta:        porta,
+		estado:       estado,
+		raftNode:     raftNode,
+		droneManager: droneManager,
+		drones:       make(map[string]string),
+	}
+}
+
+// Iniciar inicia o servidor HTTP
+func (s *ServidorAPI) Iniciar() error {
+	return s.app.Listen(":" + s.porta)
+}
+
+// RegistrarRotas registra todas as rotas da API
+func (s *ServidorAPI) RegistrarRotas() {
+	// Rotas públicas (consulta)
+	s.app.Get("/health", s.healthCheck)
+	s.app.Get("/saldo/:companhia_id", s.consultarSaldo)
+	s.app.Get("/historico", s.consultarHistorico)
+	s.app.Get("/missoes", s.listarMissoes)
+
+	// Rotas para companhias
+	s.app.Post("/requisitar-drone", s.requisitarDrone)
+	s.app.Post("/recarregar", s.recarregarCreditos)
+
+	// Rotas para drones
+	s.app.Post("/drone/registrar", s.registrarDrone)
+	s.app.Post("/drone/relatar-missao", s.relatarMissao)
+	s.app.Post("/drone/liberar", s.liberarDrone) // ADICIONAR ESTA LINHA
+
+	// Rotas internas entre brokers
+	s.app.Post("/raft/comando", s.receberComandoRaft)
+
+	// Rotas de auditoria
+	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos) // ADICIONAR ESTA LINHA
+	s.app.Get("/estatisticas", s.obterEstatisticasLaudos)   // ADICIONAR ESTA LINHA
+	s.app.Get("/drone/status", s.statusDrone)
+}
+
+
+
+[./internal/consenso/transacao.go]
+-----------------------------------------
+package consenso
+
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// TipoTransacao define os tipos possíveis de transações no ledger
+type TipoTransacao string
+
+const (
+	TipoPagamento TipoTransacao = "pagamento"
+	TipoRecarga   TipoTransacao = "recarga"
+	TipoLaudo     TipoTransacao = "laudo"
+)
+
+// Transacao representa uma entrada no ledger distribuído
+// Esta é a estrutura que será replicada entre todos os nós do Raft
+type Transacao struct {
+	ID        string          `json:"id"`
+	Tipo      TipoTransacao   `json:"tipo"`
+	Timestamp int64           `json:"timestamp"`
+	Dados     json.RawMessage `json:"dados"` // Dados específicos da transação
+}
+
+// NovaTransacao cria uma nova transação com ID único
+func NovaTransacao(tipo TipoTransacao, dados interface{}) (*Transacao, error) {
+	dadosJSON, err := json.Marshal(dados)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Transacao{
+		ID:        uuid.New().String(),
+		Tipo:      tipo,
+		Timestamp: time.Now().Unix(),
+		Dados:     dadosJSON,
+	}, nil
+}
+
+// DadosPagamento estrutura para transações de pagamento
+type DadosPagamento struct {
+	DeCompanhiaID   string `json:"de_companhia_id"`
+	ParaCompanhiaID string `json:"para_companhia_id"`
+	Valor           int    `json:"valor"`
+	Motivo          string `json:"motivo"`
+	IDRequisicao    string `json:"id_requisicao,omitempty"`
+}
+
+// DadosRecarga estrutura para transações de recarga de créditos
+type DadosRecarga struct {
+	CompanhiaID   string `json:"companhia_id"`
+	Valor         int    `json:"valor"`
+	AutorizadoPor string `json:"autorizado_por"`
+}
+
+// DadosLaudo estrutura para transações de laudo de missão
+type DadosLaudo struct {
+	IDRequisicao   string   `json:"id_requisicao"`
+	DroneID        string   `json:"drone_id"`
+	Rota           string   `json:"rota"`
+	Resultado      string   `json:"resultado"`
+	Obstaculos     []string `json:"obstaculos"`
+	Incidentes     []string `json:"incidentes"`
+	DataHoraInicio int64    `json:"data_hora_inicio"`
+	DataHoraFim    int64    `json:"data_hora_fim"`
+	Hash           string   `json:"hash"`          // Hash do laudo
+	HashAnterior   string   `json:"hash_anterior"` // Hash do laudo anterior
+}
+
+
+
+[./internal/consenso/estado.go]
+-----------------------------------------
+package consenso
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"log"
+	"sync"
+)
+
+// EstadoLedger representa o estado completo do sistema
+// Este é o objeto que será replicado pelo Raft
+type EstadoLedger struct {
+	mu        sync.RWMutex
+	Saldos    map[string]int    `json:"saldos"`    // Saldo de cada companhia
+	Historico []Transacao       `json:"historico"` // Histórico imutável de todas as transações
+	Missoes   map[string]string `json:"missoes"`   // ID da requisição -> status da missão
+}
+
+// NovoEstadoLedger cria um novo ledger com saldos iniciais
+func NovoEstadoLedger() *EstadoLedger {
+	estado := &EstadoLedger{
+		Saldos:    make(map[string]int),
+		Historico: []Transacao{},
+		Missoes:   make(map[string]string),
+	}
+
+	return estado
+}
+
+// AplicarTransacao aplica uma transação ao estado (deve ser chamado pelo Raft)
+func (e *EstadoLedger) AplicarTransacao(transacao *Transacao) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	// Adiciona ao histórico primeiro (append-only)
+	e.Historico = append(e.Historico, *transacao)
+
+	// Aplica a transação ao estado baseado no tipo
+	switch transacao.Tipo {
+	case TipoRecarga:
+		var dados DadosRecarga
+		if err := json.Unmarshal(transacao.Dados, &dados); err != nil {
+			return err
+		}
+		e.Saldos[dados.CompanhiaID] += dados.Valor
+
+	case TipoPagamento:
+		var dados DadosPagamento
+		if err := json.Unmarshal(transacao.Dados, &dados); err != nil {
+			return err
+		}
+		// Verifica se tem saldo suficiente
+		if e.Saldos[dados.DeCompanhiaID] < dados.Valor {
+			return fmt.Errorf("saldo insuficiente: %s tem %d, precisa %d",
+				dados.DeCompanhiaID, e.Saldos[dados.DeCompanhiaID], dados.Valor)
+		}
+		e.Saldos[dados.DeCompanhiaID] -= dados.Valor
+		e.Saldos[dados.ParaCompanhiaID] += dados.Valor
+
+		// Registra a missão
+		if dados.IDRequisicao != "" {
+			e.Missoes[dados.IDRequisicao] = "pago"
+		}
+
+	case TipoLaudo:
+		var dados DadosLaudo
+		if err := json.Unmarshal(transacao.Dados, &dados); err != nil {
+			return err
+		}
+		e.Missoes[dados.IDRequisicao] = "concluida"
+	}
+
+	return nil
+}
+
+// ObterSaldo retorna o saldo de uma companhia
+func (e *EstadoLedger) ObterSaldo(companhiaID string) int {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.Saldos[companhiaID]
+}
+
+// ObterHistorico retorna uma cópia do histórico
+func (e *EstadoLedger) ObterHistorico() []Transacao {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	historico := make([]Transacao, len(e.Historico))
+	copy(historico, e.Historico)
+	return historico
+}
+
+// VerificarMissaoConcluida verifica se uma missão já foi concluída
+func (e *EstadoLedger) VerificarMissaoConcluida(idRequisicao string) bool {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	status, existe := e.Missoes[idRequisicao]
+	return existe && status == "concluida"
+}
+
+// VerificarCadeiaLaudos verifica a integridade da cadeia (apenas encadeamento)
+func (e *EstadoLedger) VerificarCadeiaLaudos() (bool, string) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	var hashAnterior string = ""
+	laudosEncontrados := 0
+
+	for i, transacao := range e.Historico {
+		if transacao.Tipo == TipoLaudo {
+			laudosEncontrados++
+			var dados DadosLaudo
+			if err := json.Unmarshal(transacao.Dados, &dados); err != nil {
+				return false, fmt.Sprintf("Erro ao decodificar laudo %d: %v", i, err)
+			}
+
+			// Verifica apenas o encadeamento (hash_anterior)
+			if laudosEncontrados > 1 {
+				// Verificação segura: se hashAnterior estiver vazio e dados.HashAnterior também, ok
+				if hashAnterior == "" && dados.HashAnterior == "" {
+					// OK, ambos vazios
+				} else if hashAnterior != dados.HashAnterior {
+					// Função segura para mostrar hashes
+					hashAntMostra := hashAnterior
+					if len(hashAntMostra) > 16 {
+						hashAntMostra = hashAntMostra[:16]
+					}
+					hashRecMostra := dados.HashAnterior
+					if len(hashRecMostra) > 16 {
+						hashRecMostra = hashRecMostra[:16]
+					}
+					return false, fmt.Sprintf("❌ Encadeamento quebrado no laudo %d: esperado %s..., recebido %s...",
+						i, hashAntMostra, hashRecMostra)
+				}
+			}
+
+			// Atualiza o hash anterior
+			hashAnterior = dados.Hash
+		}
+	}
+
+	if laudosEncontrados == 0 {
+		return true, "📋 Nenhum laudo encontrado para verificar"
+	}
+
+	if laudosEncontrados == 1 {
+		return true, fmt.Sprintf("✅ 1 laudo registrado (primeiro da cadeia)")
+	}
+
+	return true, fmt.Sprintf("✅ Cadeia de %d laudos íntegra (encadeamento verificado)", laudosEncontrados)
+}
+
+// verificarHashLaudo verifica se o hash de um laudo corresponde ao seu conteúdo
+func verificarHashLaudo(dados *DadosLaudo) bool {
+	// Reconstrói os dados para calcular o hash
+	dadosParaHash := map[string]interface{}{
+		"id_requisicao":    dados.IDRequisicao,
+		"drone_id":         dados.DroneID,
+		"rota":             dados.Rota,
+		"resultado":        dados.Resultado,
+		"obstaculos":       dados.Obstaculos,
+		"incidentes":       dados.Incidentes,
+		"data_hora_inicio": dados.DataHoraInicio,
+		"data_hora_fim":    dados.DataHoraFim,
+		"hash_anterior":    dados.HashAnterior,
+	}
+
+	// Converte para JSON
+	jsonBytes, err := json.Marshal(dadosParaHash)
+	if err != nil {
+		log.Printf("[ERRO] Falha ao serializar dados para hash: %v", err)
+		return false
+	}
+
+	// Calcula o hash SHA256
+	hash := sha256.Sum256(jsonBytes)
+	hashCalculado := hex.EncodeToString(hash[:])
+
+	// Compara com o hash armazenado
+	if hashCalculado != dados.Hash {
+		log.Printf("[ALERTA] Hash inválido! Calculado: %s, Armazenado: %s",
+			hashCalculado[:16], dados.Hash[:16])
+		return false
+	}
+
+	return true
+}
+
+// ObterEstatisticasLaudos retorna estatísticas sobre os laudos no ledger
+func (e *EstadoLedger) ObterEstatisticasLaudos() map[string]interface{} {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	totalLaudos := 0
+	sucessos := 0
+	falhas := 0
+
+	for _, transacao := range e.Historico {
+		if transacao.Tipo == TipoLaudo {
+			totalLaudos++
+			var dados DadosLaudo
+			if err := json.Unmarshal(transacao.Dados, &dados); err == nil {
+				if dados.Resultado == "sucesso" {
+					sucessos++
+				} else if dados.Resultado == "falha" {
+					falhas++
+				}
+			}
+		}
+	}
+
+	return map[string]interface{}{
+		"total_laudos": totalLaudos,
+		"sucessos":     sucessos,
+		"falhas":       falhas,
+		"taxa_sucesso": float64(sucessos) / float64(max(totalLaudos, 1)) * 100,
+	}
+}
+
+// Função auxiliar para evitar divisão por zero
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+
+
+[./internal/consenso/tcp_raft.go]
+-----------------------------------------
+package consenso
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+	"sync"
+	"time"
+)
+
+type TCPRaft struct {
+	mu          sync.RWMutex
+	id          string
+	addr        string            // endereço TCP (ex: "127.0.0.1:7000")
+	peers       map[string]string // id -> endereço
+	isLeader    bool
+	leaderId    string
+	leaderAddr  string
+	state       *EstadoLedger
+	heartbeatCh chan bool
+	stopCh      chan struct{}
+}
+
+type RaftConfigTCP struct {
+	NodeID    string
+	RaftAddr  string
+	Peers     map[string]string // id -> endereço dos outros nós
+	Bootstrap bool              // se true, começa como líder
+}
+
+func NewTCPRaft(cfg RaftConfigTCP) (*TCPRaft, error) {
+	r := &TCPRaft{
+		id:          cfg.NodeID,
+		addr:        cfg.RaftAddr,
+		peers:       cfg.Peers,
+		isLeader:    cfg.Bootstrap,
+		state:       NovoEstadoLedger(),
+		heartbeatCh: make(chan bool, 100),
+		stopCh:      make(chan struct{}),
+	}
+	if !cfg.Bootstrap {
+		go func() {
+			time.Sleep(1 * time.Second) // Aguarda servidor TCP iniciar
+			r.tryJoin()
+			r.campaign()
+		}()
+	} else {
+		go r.sendHeartbeats()
+	}
+	// Inicia servidor TCP
+	go r.startTCPServer()
+	// Se não for bootstrap, inicia eleição (após alguns segundos)
+	if !cfg.Bootstrap {
+		go r.campaign()
+	} else {
+		go r.sendHeartbeats()
+	}
+	return r, nil
+}
+
+// tryJoin tenta se juntar ao cluster enviando um comando "join" para qualquer peer conhecido
+func (r *TCPRaft) tryJoin() {
+	for id, addr := range r.peers {
+		if id == r.id {
+			continue
+		}
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			log.Printf("[RAFT %s] Falha ao conectar para join em %s: %v", r.id, addr, err)
+			continue
+		}
+		msg := fmt.Sprintf(`{"type":"join","nodeId":"%s","nodeAddr":"%s"}`, r.id, r.addr)
+		fmt.Fprintf(conn, "%s\n", msg)
+		// Aguarda resposta "ok"
+		buf := make([]byte, 2)
+		n, _ := conn.Read(buf)
+		conn.Close()
+		if n >= 2 && string(buf[:2]) == "ok" {
+			log.Printf("[RAFT %s] ✅ Juntou-se ao cluster via %s (%s)", r.id, id, addr)
+			return
+		}
+	}
+	log.Printf("[RAFT %s] ⚠️ Não conseguiu se juntar a nenhum peer. Tentará novamente em 5s.", r.id)
+	time.AfterFunc(5*time.Second, r.tryJoin)
+}
+
+func (r *TCPRaft) startTCPServer() {
+	ln, err := net.Listen("tcp", r.addr)
+	if err != nil {
+		log.Fatalf("[RAFT %s] erro ao ouvir: %v", r.id, err)
+	}
+	defer ln.Close()
+	for {
+		select {
+		case <-r.stopCh:
+			return
+		default:
+			conn, err := ln.Accept()
+			if err != nil {
+				continue
+			}
+			go r.handleConnection(conn)
+		}
+	}
+}
+
+func (r *TCPRaft) handleConnection(conn net.Conn) {
+	defer conn.Close()
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		line := scanner.Text()
+		var cmd map[string]interface{}
+		if err := json.Unmarshal([]byte(line), &cmd); err != nil {
+			continue
+		}
+		typ := cmd["type"].(string)
+		switch typ {
+		case "heartbeat":
+			r.handleHeartbeat(cmd)
+		case "vote":
+			r.handleVote(cmd, conn)
+		case "append":
+			r.handleAppend(cmd)
+		case "join":
+			r.handleJoin(cmd, conn)
+		}
+	}
+}
+
+// ------------------ Eleição ------------------
+func (r *TCPRaft) campaign() {
+	time.Sleep(2 * time.Second) // aguarda estabilização
+	for {
+		if r.isLeader {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		// Se não recebe heartbeat do líder há mais de 2 segundos
+		// Inicia eleição
+		r.mu.Lock()
+		lastLeader := r.leaderId
+		r.mu.Unlock()
+		if lastLeader != "" {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		log.Printf("[RAFT %s] iniciando eleição", r.id)
+		votes := 1
+		for id, addr := range r.peers {
+			if id == r.id {
+				continue
+			}
+			if r.requestVote(addr) {
+				votes++
+			}
+		}
+		if votes > len(r.peers)/2 {
+			r.mu.Lock()
+			r.isLeader = true
+			r.leaderId = r.id
+			r.leaderAddr = r.addr
+			r.mu.Unlock()
+			log.Printf("[RAFT %s] tornou-se LÍDER", r.id)
+			go r.sendHeartbeats()
+			return
+		}
+		time.Sleep(3 * time.Second)
+	}
+}
+
+func (r *TCPRaft) requestVote(targetAddr string) bool {
+	conn, err := net.Dial("tcp", targetAddr)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	req := map[string]interface{}{
+		"type":      "vote",
+		"candidate": r.id,
+		"term":      1,
+	}
+	data, _ := json.Marshal(req)
+	fmt.Fprintf(conn, "%s\n", data)
+	scanner := bufio.NewScanner(conn)
+	if scanner.Scan() {
+		resp := scanner.Text()
+		var res map[string]interface{}
+		json.Unmarshal([]byte(resp), &res)
+		if granted, ok := res["granted"].(bool); ok && granted {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *TCPRaft) handleVote(cmd map[string]interface{}, conn net.Conn) {
+
+	candidate := cmd["candidate"].(string)
+	// Sempre vota sim (simplificado)
+	log.Printf("[RAFT %s] recebido pedido de voto de %s", r.id, candidate)
+	resp := map[string]interface{}{"granted": true}
+	data, _ := json.Marshal(resp)
+	fmt.Fprintf(conn, "%s\n", data)
+}
+
+// ------------------ Heartbeat ------------------
+func (r *TCPRaft) sendHeartbeats() {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-r.stopCh:
+			return
+		case <-ticker.C:
+			if !r.isLeader {
+				return
+			}
+			r.mu.RLock()
+			peers := make(map[string]string)
+			for k, v := range r.peers {
+				peers[k] = v
+			}
+			r.mu.RUnlock()
+			for id, addr := range peers {
+				if id == r.id {
+					continue
+				}
+				go r.sendHeartbeat(addr)
+			}
+		}
+	}
+}
+
+func (r *TCPRaft) sendHeartbeat(targetAddr string) {
+	conn, err := net.Dial("tcp", targetAddr)
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+	req := map[string]interface{}{
+		"type":       "heartbeat",
+		"leader":     r.id,
+		"leaderAddr": r.addr,
+	}
+	data, _ := json.Marshal(req)
+	fmt.Fprintf(conn, "%s\n", data)
+}
+
+func (r *TCPRaft) handleHeartbeat(cmd map[string]interface{}) {
+	leader := cmd["leader"].(string)
+	leaderAddr := cmd["leaderAddr"].(string)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.isLeader && leader != r.id {
+		r.isLeader = false
+	}
+	r.leaderId = leader
+	r.leaderAddr = leaderAddr
+}
+
+// ------------------ Replicação de comandos ------------------
+func (r *TCPRaft) AplicarTransacao(transacao *Transacao) error {
+	if !r.isLeader {
+		return fmt.Errorf("não sou líder, líder é %s", r.leaderId)
+	}
+	// Aplica localmente
+	if err := r.state.AplicarTransacao(transacao); err != nil {
+		return err
+	}
+	log.Printf("[RAFT LÍDER %s] 📝 Transação %s aplicada localmente", r.id, transacao.ID)
+
+	// Prepara comando para replicação
+	data, _ := json.Marshal(transacao)
+	cmd := map[string]interface{}{
+		"type": "append",
+		"data": string(data),
+	}
+	cmdJSON, _ := json.Marshal(cmd)
+	cmdStr := string(cmdJSON)
+
+	replicados := 0
+	for id, addr := range r.peers {
+		if id == r.id {
+			continue
+		}
+		go func(peerId, peerAddr string) {
+			if err := r.sendAppend(peerAddr, cmdStr); err != nil {
+				log.Printf("[RAFT LÍDER %s] ❌ Falha ao replicar para %s (%s): %v", r.id, peerId, peerAddr, err)
+			} else {
+				log.Printf("[RAFT LÍDER %s] ✅ Transação %s replicada para %s (%s)", r.id, transacao.ID, peerId, peerAddr)
+			}
+		}(id, addr)
+		replicados++
+	}
+	log.Printf("[RAFT LÍDER %s] 📡 Transação %s enviada para %d seguidores", r.id, transacao.ID, replicados)
+	return nil
+}
+
+func (r *TCPRaft) sendAppend(targetAddr, cmd string) error {
+	conn, err := net.Dial("tcp", targetAddr)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	_, err = fmt.Fprintf(conn, "%s\n", cmd)
+	return err
+}
+
+func (r *TCPRaft) handleAppend(cmd map[string]interface{}) {
+	dataStr, ok := cmd["data"].(string)
+	if !ok {
+		log.Printf("[RAFT SEGUIDOR %s] Campo 'data' inválido ou ausente", r.id)
+		return
+	}
+	var transacao Transacao
+	if err := json.Unmarshal([]byte(dataStr), &transacao); err != nil {
+		log.Printf("[RAFT SEGUIDOR %s] Erro ao decodificar transação replicada: %v", r.id, err)
+		return
+	}
+	if err := r.state.AplicarTransacao(&transacao); err != nil {
+		log.Printf("[RAFT SEGUIDOR %s] Erro ao aplicar transação replicada %s: %v", r.id, transacao.ID, err)
+		return
+	}
+	log.Printf("[RAFT SEGUIDOR %s] ✅ Transação replicada aplicada: %s", r.id, transacao.ID)
+}
+
+// ------------------ Join ------------------
+func (r *TCPRaft) handleJoin(cmd map[string]interface{}, conn net.Conn) {
+	nodeId := cmd["nodeId"].(string)
+	nodeAddr := cmd["nodeAddr"].(string)
+	r.mu.Lock()
+	r.peers[nodeId] = nodeAddr
+	r.mu.Unlock()
+	fmt.Fprintf(conn, "ok\n")
+}
+
+func (r *TCPRaft) ObterEstado() *EstadoLedger {
+	return r.state
+}
+
+func (r *TCPRaft) EhLider() bool {
+	return r.isLeader
+}
+
+func (r *TCPRaft) ObterLiderID() string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.leaderId
+}
+
+func (r *TCPRaft) Close() {
+	close(r.stopCh)
+}
+
+
+
+[./internal/drone/cliente.go]
+-----------------------------------------
+package drone
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
+
+	"W-PBL3/pkg/modelos"
+)
+
+// ClienteDrone é responsável por se comunicar com os drones via HTTP
+type ClienteDrone struct {
+	client *http.Client
+}
+
+// NovoClienteDrone cria um novo cliente para comunicação com drones
+func NovoClienteDrone() *ClienteDrone {
+	return &ClienteDrone{
+		client: &http.Client{
+			Timeout: 10 * time.Second,
+		},
+	}
+}
+
+// DespacharDrone envia um comando para o drone iniciar uma missão
+func (c *ClienteDrone) DespacharDrone(droneID, porta, idRequisicao, rota string) error {
+	// Prepara a requisição para o drone
+	requisicao := map[string]interface{}{
+		"id_requisicao": idRequisicao,
+		"rota":          rota,
+		"drone_id":      droneID,
+	}
+
+	jsonData, err := json.Marshal(requisicao)
+	if err != nil {
+		return fmt.Errorf("erro ao serializar requisição: %v", err)
+	}
+
+	// Envia para o drone
+	url := fmt.Sprintf("http://localhost:%s/iniciar-missao", porta)
+	resp, err := c.client.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("erro ao comunicar com drone %s: %v", droneID, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("drone %s retornou erro: %d", droneID, resp.StatusCode)
+	}
+
+	return nil
+}
+
+// EnviarLaudo envia o laudo da missão para o drone (simulado)
+// Nota: Na implementação real, o drone que envia o laudo, não o broker
+// Este método é apenas para referência
+func (c *ClienteDrone) EnviarLaudo(droneID, porta string, laudo *modelos.LaudoMissao) error {
+	jsonData, err := json.Marshal(laudo)
+	if err != nil {
+		return fmt.Errorf("erro ao serializar laudo: %v", err)
+	}
+
+	url := fmt.Sprintf("http://localhost:%s/relatar-missao", porta)
+	resp, err := c.client.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("erro ao enviar laudo: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("falha ao relatar missão: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+
+
+[./internal/drone/gerenciador.go]
+-----------------------------------------
+package drone
+
+import (
+	"fmt"
+	"log"
+	"sync"
+)
+
+// GerenciadorDrones gerencia o estado de todos os drones (disponíveis/ocupados)
+type GerenciadorDrones struct {
+	mu            sync.RWMutex
+	drones        map[string]*DroneInfo // ID do drone -> informações
+	missoesAtivas map[string]string     // ID da requisição -> ID do drone
+}
+
+// DroneInfo contém as informações de um drone
+type DroneInfo struct {
+	ID          string `json:"id"`
+	Porta       string `json:"porta"`        // Porta onde o drone escuta
+	Status      string `json:"status"`       // "disponivel", "ocupado", "offline"
+	MissaoAtual string `json:"missao_atual"` // ID da requisição (se ocupado)
+}
+
+// NovoGerenciadorDrones cria um novo gerenciador
+func NovoGerenciadorDrones() *GerenciadorDrones {
+	return &GerenciadorDrones{
+		drones:        make(map[string]*DroneInfo),
+		missoesAtivas: make(map[string]string),
+	}
+}
+
+// RegistrarDrone adiciona um drone ao pool
+func (g *GerenciadorDrones) RegistrarDrone(droneID, porta string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	g.drones[droneID] = &DroneInfo{
+		ID:          droneID,
+		Porta:       porta,
+		Status:      "disponivel",
+		MissaoAtual: "",
+	}
+	log.Printf("[DRONE] Drone %s registrado na porta %s", droneID, porta)
+}
+
+// AlocarDrone busca um drone disponível e o aloca para uma missão
+func (g *GerenciadorDrones) AlocarDrone(idRequisicao, rota string) (string, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	// Procura um drone disponível
+	for id, drone := range g.drones {
+		if drone.Status == "disponivel" {
+			// Aloca o drone
+			drone.Status = "ocupado"
+			drone.MissaoAtual = idRequisicao
+			g.missoesAtivas[idRequisicao] = id
+
+			log.Printf("[DRONE] Drone %s alocado para missão %s (rota: %s)", id, idRequisicao, rota)
+			return id, nil
+		}
+	}
+
+	return "", fmt.Errorf("nenhum drone disponível")
+}
+
+// LiberarDrone libera um drone após a conclusão da missão
+func (g *GerenciadorDrones) LiberarDrone(droneID string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	if drone, existe := g.drones[droneID]; existe {
+		// Remove da lista de missões ativas
+		if drone.MissaoAtual != "" {
+			delete(g.missoesAtivas, drone.MissaoAtual)
+		}
+
+		drone.Status = "disponivel"
+		drone.MissaoAtual = ""
+		log.Printf("[DRONE] Drone %s liberado e disponível novamente", droneID)
+	}
+}
+
+// ObterDroneStatus retorna o status de um drone específico
+func (g *GerenciadorDrones) ObterDroneStatus(droneID string) (string, error) {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	if drone, existe := g.drones[droneID]; existe {
+		return drone.Status, nil
+	}
+	return "", fmt.Errorf("drone não encontrado")
+}
+
+// ListarDrones retorna a lista de todos os drones com seus status
+func (g *GerenciadorDrones) ListarDrones() map[string]string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	resultado := make(map[string]string)
+	for id, drone := range g.drones {
+		resultado[id] = drone.Status
+	}
+	return resultado
+}
+
+// ListarMissoesAtivas retorna todas as missões ativas no momento
+func (g *GerenciadorDrones) ListarMissoesAtivas() map[string]string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	missoes := make(map[string]string)
+	for idReq, droneID := range g.missoesAtivas {
+		missoes[idReq] = droneID
+	}
+	return missoes
+}
+
+
+
+[./go.mod]
+-----------------------------------------
+module W-PBL3
+
+go 1.26.3
+
+require (
+	github.com/gofiber/fiber/v2 v2.52.13
+	github.com/google/uuid v1.6.0
+)
+
+require (
+	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.51.0 // indirect
+	github.com/valyala/tcplisten v1.0.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+)
+
+
+
+[./cmd/drone-simulator/main.go]
+-----------------------------------------
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"flag"
+	"log"
+	"math/rand"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+var (
+	droneID     string
+	brokerURL   string
+	porta       string
+	registrado  bool
+	emMissao    bool
+	missaoAtual string
+	rotaAtual   string
+)
+
+func main() {
+	flag.StringVar(&droneID, "id", "", "ID do drone (ex: drone1)")
+	flag.StringVar(&brokerURL, "broker", "http://localhost:8080", "URL do broker")
+	flag.StringVar(&porta, "porta", "9001", "Porta para receber missões")
+	flag.Parse()
+
+	if droneID == "" {
+		log.Fatal("ID do drone é obrigatório")
+	}
+
+	log.Printf("[DRONE %s] Iniciando simulador autônomo...", droneID)
+
+	// Registrar no broker
+	registrarNoBroker()
+
+	// Iniciar servidor HTTP para receber missões
+	go iniciarServidorHTTP()
+
+	// Aguardar sinal de término
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	log.Printf("[DRONE %s] Encerrando...", droneID)
+}
+
+func registrarNoBroker() {
+	for i := 0; i < 10; i++ {
+		reqData := map[string]string{
+			"drone_id": droneID,
+			"porta":    porta,
+		}
+		jsonData, _ := json.Marshal(reqData)
+
+		resp, err := http.Post(brokerURL+"/drone/registrar", "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			log.Printf("[DRONE %s] Erro ao registrar (tentativa %d): %v", droneID, i+1, err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == 200 {
+			log.Printf("[DRONE %s] ✅ Registrado com sucesso no broker %s", droneID, brokerURL)
+			registrado = true
+			return
+		}
+	}
+	log.Printf("[DRONE %s] ❌ Falha ao registrar após 10 tentativas", droneID)
+}
+
+func iniciarServidorHTTP() {
+	http.HandleFunc("/iniciar-missao", func(w http.ResponseWriter, r *http.Request) {
+		var req map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Printf("[DRONE %s] Erro ao decodificar requisição: %v", droneID, err)
+			http.Error(w, "Erro ao decodificar", 400)
+			return
+		}
+
+		idRequisicao, ok := req["id_requisicao"].(string)
+		if !ok {
+			log.Printf("[DRONE %s] Campo id_requisicao inválido", droneID)
+			http.Error(w, "id_requisicao inválido", 400)
+			return
+		}
+
+		rota, _ := req["rota"].(string)
+
+		log.Printf("[DRONE %s] 🚀 Missão REAL recebida do broker: %s (Rota: %s)", droneID, idRequisicao, rota)
+
+		// Iniciar missão em background
+		go executarMissaoReal(idRequisicao, rota)
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "missão iniciada"})
+	})
+
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "drone": droneID})
+	})
+
+	log.Printf("[DRONE %s] 🌐 Servidor HTTP iniciado na porta %s", droneID, porta)
+	log.Fatal(http.ListenAndServe(":"+porta, nil))
+}
+
+func executarMissaoReal(idRequisicao, rota string) {
+	if emMissao {
+		log.Printf("[DRONE %s] ⚠️ Já em missão, ignorando nova missão %s", droneID, idRequisicao)
+		return
+	}
+
+	emMissao = true
+	missaoAtual = idRequisicao
+	rotaAtual = rota
+
+	log.Printf("[DRONE %s] ✈️ Executando missão REAL %s na rota %s...", droneID, missaoAtual, rotaAtual)
+
+	// Simular tempo de voo entre 5-15 segundos
+	tempoVoo := time.Duration(5+rand.Intn(10)) * time.Second
+	time.Sleep(tempoVoo)
+
+	// Enviar laudo da missão
+	enviarLaudo()
+}
+
+func enviarLaudo() {
+	// Gerar dados do laudo baseados na missão real
+	obstaculos := []string{}
+	if rand.Intn(3) == 0 {
+		obstaculos = append(obstaculos, "Congestionamento detectado na rota")
+	}
+	if rand.Intn(4) == 0 {
+		obstaculos = append(obstaculos, "Objeto flutuante na posição 23°S")
+	}
+	if rand.Intn(5) == 0 {
+		obstaculos = append(obstaculos, "Navio cargueiro parado na rota")
+	}
+	if rand.Intn(6) == 0 {
+		obstaculos = append(obstaculos, "Zona de neblina densa")
+	}
+
+	incidentes := []string{}
+	if rand.Intn(5) == 0 {
+		incidentes = append(incidentes, "Perda de sinal por 3 segundos")
+	}
+	if rand.Intn(8) == 0 {
+		incidentes = append(incidentes, "Bateria em nível crítico (15%)")
+	}
+	if rand.Intn(10) == 0 {
+		incidentes = append(incidentes, "Comunicação com broker instável")
+	}
+
+	// Escolher resultado (90% sucesso, 10% falha)
+	resultado := "sucesso"
+	if rand.Intn(10) == 0 {
+		resultado = "falha"
+		incidentes = append(incidentes, "Missão não completada devido a falha técnica")
+	}
+
+	inicio := time.Now().Unix() - int64(5+rand.Intn(10))
+	fim := time.Now().Unix()
+
+	laudo := map[string]interface{}{
+		"id_requisicao":    missaoAtual,
+		"drone_id":         droneID,
+		"rota":             rotaAtual,
+		"resultado":        resultado,
+		"obstaculos":       obstaculos,
+		"incidentes":       incidentes,
+		"data_hora_inicio": inicio,
+		"data_hora_fim":    fim,
+		"hash_anterior":    "",
+		"hash_verificacao": gerarHash(missaoAtual),
+	}
+
+	jsonData, _ := json.Marshal(laudo)
+
+	log.Printf("[DRONE %s] 📤 Enviando laudo para missão %s...", droneID, missaoAtual)
+
+	resp, err := http.Post(brokerURL+"/drone/relatar-missao", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[DRONE %s] ❌ Erro ao enviar laudo: %v", droneID, err)
+		emMissao = false
+		missaoAtual = ""
+		rotaAtual = ""
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		log.Printf("[DRONE %s] ✅ Laudo enviado com sucesso para missão %s", droneID, missaoAtual)
+		log.Printf("[DRONE %s] 📋 Resultado: %s", droneID, resultado)
+		if len(obstaculos) > 0 {
+			log.Printf("[DRONE %s] 📋 Obstáculos: %v", droneID, obstaculos)
+		}
+		if len(incidentes) > 0 {
+			log.Printf("[DRONE %s] ⚠️ Incidentes: %v", droneID, incidentes)
+		}
+	} else {
+		log.Printf("[DRONE %s] ❌ Falha ao enviar laudo. Status: %d", droneID, resp.StatusCode)
+	}
+
+	emMissao = false
+	missaoAtual = ""
+	rotaAtual = ""
+}
+
+func gerarHash(s string) string {
+	if len(s) < 8 {
+		return "hash_" + time.Now().Format("150405") + "_" + s
+	}
+	return "hash_" + time.Now().Format("150405") + "_" + s[:8]
+}
+
+
+
+[./cmd/broker/main.go]
+-----------------------------------------
+package main
+
+import (
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
+	"W-PBL3/internal/api"
+	"W-PBL3/internal/consenso"
+	"W-PBL3/internal/drone"
+)
+
+func main() {
+	var (
+		id        = flag.String("id", "broker1", "ID do broker")
+		portaAPI  = flag.String("porta", "8080", "Porta HTTP")
+		ehLider   = flag.Bool("lider", false, "Inicia como líder (bootstrap)")
+		outrosNos = flag.String("outros", "", "IDs dos outros brokers (ex: broker2,broker3)")
+	)
+	flag.Parse()
+
+	peers := make(map[string]string)
+	peers[*id] = getRaftAddr(*id)
+
+	if *outrosNos != "" {
+		for _, outroID := range strings.Split(*outrosNos, ",") {
+			outroID = strings.TrimSpace(outroID)
+			if outroID == "" {
+				continue
+			}
+			peers[outroID] = getRaftAddr(outroID)
+		}
+	}
+
+	cfg := consenso.RaftConfigTCP{
+		NodeID:    *id,
+		RaftAddr:  peers[*id],
+		Peers:     peers,
+		Bootstrap: *ehLider,
+	}
+
+	raftNode, err := consenso.NewTCPRaft(cfg)
+	if err != nil {
+		log.Fatalf("[ERRO] Falha ao criar nó Raft: %v", err)
+	}
+	defer raftNode.Close()
+
+	droneManager := drone.NovoGerenciadorDrones()
+	servidor := api.NovoServidorAPI(*portaAPI, raftNode, droneManager) // assinatura ajustada
+	servidor.RegistrarRotas()
+
+	if *ehLider {
+		time.Sleep(5 * time.Second)
+		aplicarCreditosIniciais(raftNode)
+	}
+
+	go func() {
+		if err := servidor.Iniciar(); err != nil {
+			log.Fatalf("[ERRO] Falha ao iniciar servidor: %v", err)
+		}
+	}()
+
+	log.Printf("[SUCESSO] Broker %s rodando. API: http://localhost:%s, Raft: %s", *id, *portaAPI, peers[*id])
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	log.Println("[FIM] Encerrando broker...")
+}
+
+func getRaftAddr(id string) string {
+	var num int
+	for i := len(id) - 1; i >= 0; i-- {
+		if id[i] >= '0' && id[i] <= '9' {
+			num = num*10 + int(id[i]-'0')
+		} else {
+			break
+		}
+	}
+	if num == 0 {
+		num = 1
+	}
+	return fmt.Sprintf("127.0.0.1:%d", 7000+(num-1))
+}
+
+func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
+	transacaoA, _ := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
+		CompanhiaID:   "COMP-A",
+		Valor:         100,
+		AutorizadoPor: "sistema",
+	})
+	if err := raftNode.AplicarTransacao(transacaoA); err != nil {
+		log.Printf("[AVISO] Erro ao recarregar COMP-A: %v", err)
+	}
+
+	transacaoB, _ := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
+		CompanhiaID:   "COMP-B",
+		Valor:         50,
+		AutorizadoPor: "sistema",
+	})
+	if err := raftNode.AplicarTransacao(transacaoB); err != nil {
+		log.Printf("[AVISO] Erro ao recarregar COMP-B: %v", err)
+	}
+	log.Println("[INICIAL] Créditos iniciais aplicados via Raft")
+}
+
+
+
+[./cmd/company/main.go]
+-----------------------------------------
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"log"
+	"math/rand"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+type Company struct {
+	ID    string
+	Nome  string
+	Saldo int
+}
+
+var (
+	companyID string
+	brokerURL string
+	rotas     = []string{"Rota Norte", "Rota Sul", "Rota Leste", "Rota Oeste", "Rota Central"}
+)
+
+func main() {
+	flag.StringVar(&companyID, "id", "", "ID da companhia (ex: COMP-A)")
+	flag.StringVar(&brokerURL, "broker", "http://broker1:8080", "URL do broker")
+	flag.Parse()
+
+	if companyID == "" {
+		log.Fatal("ID da companhia é obrigatório")
+	}
+
+	log.Printf("[COMPANY %s] Iniciando simulador autônomo...", companyID)
+
+	// Aguardar brokers iniciarem
+	time.Sleep(5 * time.Second)
+
+	// Simular comportamento da companhia
+	go simularRequisicoes()
+
+	// Aguardar sinal de término
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	log.Printf("[COMPANY %s] Encerrando...", companyID)
+}
+
+func simularRequisicoes() {
+	for {
+		// Aguardar entre 10-30 segundos entre requisições
+		intervalo := time.Duration(10+rand.Intn(20)) * time.Second
+		time.Sleep(intervalo)
+
+		// Escolher rota aleatória
+		rota := rotas[rand.Intn(len(rotas))]
+
+		log.Printf("[COMPANY %s] Solicitando drone para %s", companyID, rota)
+
+		resposta := requisitarDrone(rota)
+		if resposta != "" {
+			log.Printf("[COMPANY %s] Resposta: %s", companyID, resposta)
+		}
+
+		// Verificar saldo periodicamente
+		if rand.Intn(5) == 0 { // 20% das vezes
+			verificarSaldo()
+		}
+	}
+}
+
+func requisitarDrone(rota string) string {
+	reqData := map[string]string{
+		"companhia_id": companyID,
+		"rota":         rota,
+	}
+	jsonData, _ := json.Marshal(reqData)
+
+	resp, err := http.Post(brokerURL+"/requisitar-drone", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[COMPANY %s] Erro na requisição: %v", companyID, err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return fmt.Sprintf("Erro ao decodificar resposta: %v", err)
+	}
+
+	// Verificar se houve erro de saldo insuficiente
+	if resp.StatusCode == 402 {
+		log.Printf("[COMPANY %s] Saldo insuficiente! Recarregando...", companyID)
+		recarregarCreditos(100) // Recarrega 100 créditos
+	}
+
+	// Extrair informações relevantes
+	status := result["status"]
+	if status == nil {
+		status = result["erro"]
+	}
+
+	return fmt.Sprintf("HTTP %d: %v", resp.StatusCode, status)
+}
+
+func verificarSaldo() {
+	resp, err := http.Get(brokerURL + "/saldo/" + companyID)
+	if err != nil {
+		log.Printf("[COMPANY %s] Erro ao verificar saldo: %v", companyID, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Printf("[COMPANY %s] Erro ao decodificar saldo: %v", companyID, err)
+		return
+	}
+
+	if saldo, ok := result["saldo"].(float64); ok {
+		log.Printf("[COMPANY %s] Saldo atual: %.0f créditos", companyID, saldo)
+
+		if saldo < 50 {
+			log.Printf("[COMPANY %s] ⚠️ Saldo baixo (%.0f < 50). Recarregando 200 créditos...", companyID, saldo)
+			recarregarCreditos(200)
+		} else {
+			log.Printf("[COMPANY %s] Saldo suficiente (%.0f). Nenhuma recarga necessária.", companyID, saldo)
+		}
+	}
+}
+
+func recarregarCreditos(valor int) {
+	reqData := map[string]interface{}{
+		"companhia_id": companyID,
+		"valor":        valor,
+	}
+	jsonData, _ := json.Marshal(reqData)
+
+	resp, err := http.Post(brokerURL+"/recarregar", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[COMPANY %s] Erro na recarga: %v", companyID, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Printf("[COMPANY %s] Erro ao decodificar resposta da recarga: %v", companyID, err)
+		return
+	}
+
+	if novoSaldo, ok := result["novo_saldo"].(float64); ok {
+		log.Printf("[COMPANY %s] ✅ Recarga de %d créditos realizada! Novo saldo: %.0f", companyID, valor, novoSaldo)
+	} else {
+		log.Printf("[COMPANY %s] Recarga solicitada: %d créditos", companyID, valor)
+	}
+}
+
+
+
+[./pkg/modelos/companhia.go]
+-----------------------------------------
+package modelos
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// Companhia representa uma empresa de navegação que pode requisitar drones
+type Companhia struct {
+	ID    string `json:"id"`
+	Nome  string `json:"nome"`
+	Saldo int    `json:"saldo"`
+}
+
+// NovaCompanhia cria uma nova instância de companhia
+func NovaCompanhia(id, nome string, saldoInicial int) *Companhia {
+	return &Companhia{
+		ID:    id,
+		Nome:  nome,
+		Saldo: saldoInicial,
+	}
+}
+
+// RequisicaoEscolta representa o pedido de uma companhia para usar um drone
+type RequisicaoEscolta struct {
+	IDRequisicao string `json:"id_requisicao"`
+	CompanhiaID  string `json:"companhia_id"`
+	Rota         string `json:"rota"`
+	Timestamp    int64  `json:"timestamp"`
+	Status       string `json:"status"`
+	DroneID      string `json:"drone_id,omitempty"`
+}
+
+// Status possíveis para uma requisição
+const (
+	StatusPendente  = "pendente"
+	StatusAprovada  = "aprovada"
+	StatusNegada    = "negada"
+	StatusConcluida = "concluida"
+)
+
+// NovaRequisicaoEscolta cria uma nova requisição com ID automático
+func NovaRequisicaoEscolta(companhiaID, rota string) *RequisicaoEscolta {
+	return &RequisicaoEscolta{
+		IDRequisicao: uuid.New().String(), // Agora usando uuid de verdade
+		CompanhiaID:  companhiaID,
+		Rota:         rota,
+		Timestamp:    time.Now().Unix(),
+		Status:       StatusPendente,
+	}
+}
+
+
+
+[./pkg/modelos/requisicao.go]
+-----------------------------------------
+package modelos
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// Pagamento representa uma transação de créditos entre companhias ou para o sistema
+type Pagamento struct {
+	ID              string `json:"id"`
+	DeCompanhiaID   string `json:"de_companhia_id"`
+	ParaCompanhiaID string `json:"para_companhia_id"`
+	Valor           int    `json:"valor"`
+	Motivo          string `json:"motivo"` // "requisicao_drone", "recarga", etc.
+	Timestamp       int64  `json:"timestamp"`
+}
+
+// NovoPagamento cria um novo registro de pagamento
+func NovoPagamento(deCompanhiaID, paraCompanhiaID string, valor int, motivo string) *Pagamento {
+	return &Pagamento{
+		ID:              uuid.New().String(),
+		DeCompanhiaID:   deCompanhiaID,
+		ParaCompanhiaID: paraCompanhiaID,
+		Valor:           valor,
+		Motivo:          motivo,
+		Timestamp:       time.Now().Unix(),
+	}
+}
+
+// RecargaCreditos representa uma operação de adicionar créditos a uma companhia (administrativa)
+type RecargaCredito struct {
+	CompanhiaID   string `json:"companhia_id"`
+	Valor         int    `json:"valor"`
+	AutorizadoPor string `json:"autorizado_por"` // "sistema" ou "admin"
+	Timestamp     int64  `json:"timestamp"`
+	ID            string `json:"id"`
+}
+
+// NovaRecargaCredito cria uma nova operação de recarga
+func NovaRecargaCredito(companhiaID string, valor int, autorizadoPor string) *RecargaCredito {
+	return &RecargaCredito{
+		ID:            uuid.New().String(),
+		CompanhiaID:   companhiaID,
+		Valor:         valor,
+		AutorizadoPor: autorizadoPor,
+		Timestamp:     time.Now().Unix(),
+	}
+}
+
+
+
+[./pkg/modelos/laudo.go]
+-----------------------------------------
+package modelos
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// LaudoMissao representa o relatório gerado por um drone após completar uma missão
+type LaudoMissao struct {
+	ID              string   `json:"id"`
+	IDRequisicao    string   `json:"id_requisicao"`
+	DroneID         string   `json:"drone_id"`
+	Rota            string   `json:"rota"`
+	Resultado       string   `json:"resultado"`
+	Obstaculos      []string `json:"obstaculos"`
+	Incidentes      []string `json:"incidentes"`
+	DataHoraInicio  int64    `json:"data_hora_inicio"`
+	DataHoraFim     int64    `json:"data_hora_fim"`
+	HashAnterior    string   `json:"hash_anterior"`    // Hash do laudo anterior (encadeamento)
+	HashVerificacao string   `json:"hash_verificacao"` // Hash deste laudo
+}
+
+// NovoLaudoMissao cria um novo laudo de missão
+func NovoLaudoMissao(idRequisicao, droneID, rota, resultado string) *LaudoMissao {
+	return &LaudoMissao{
+		ID:             uuid.New().String(),
+		IDRequisicao:   idRequisicao,
+		DroneID:        droneID,
+		Rota:           rota,
+		Resultado:      resultado,
+		Obstaculos:     []string{},
+		Incidentes:     []string{},
+		DataHoraInicio: time.Now().Unix(),
+		HashAnterior:   "", // Será preenchido depois
+	}
+}
+
+// AdicionarObstaculo adiciona um obstáculo detectado ao laudo
+func (l *LaudoMissao) AdicionarObstaculo(obstaculo string) {
+	l.Obstaculos = append(l.Obstaculos, obstaculo)
+}
+
+// AdicionarIncidente adiciona um incidente ao laudo
+func (l *LaudoMissao) AdicionarIncidente(incidente string) {
+	l.Incidentes = append(l.Incidentes, incidente)
+}
+
+// FinalizarLaudo finaliza o laudo com o timestamp de término e calcula o hash
+func (l *LaudoMissao) FinalizarLaudo() {
+	l.DataHoraFim = time.Now().Unix()
+	l.CalcularHash()
+}
+
+// CalcularHash calcula o hash SHA256 do conteúdo do laudo
+func (l *LaudoMissao) CalcularHash() {
+	// Cria um mapa com os dados que serão usados para o hash
+	dadosParaHash := map[string]interface{}{
+		"id":               l.ID,
+		"id_requisicao":    l.IDRequisicao,
+		"drone_id":         l.DroneID,
+		"rota":             l.Rota,
+		"resultado":        l.Resultado,
+		"obstaculos":       l.Obstaculos,
+		"incidentes":       l.Incidentes,
+		"data_hora_inicio": l.DataHoraInicio,
+		"data_hora_fim":    l.DataHoraFim,
+		"hash_anterior":    l.HashAnterior,
+	}
+
+	// Converte para JSON
+	jsonBytes, err := json.Marshal(dadosParaHash)
+	if err != nil {
+		l.HashVerificacao = "erro_ao_calcular_hash"
+		return
+	}
+
+	// Calcula o hash SHA256
+	hash := sha256.Sum256(jsonBytes)
+	l.HashVerificacao = hex.EncodeToString(hash[:])
+}
+
+// VerificarIntegridade verifica se o hash do laudo é válido
+func (l *LaudoMissao) VerificarIntegridade() bool {
+	// Salva o hash atual
+	hashAtual := l.HashVerificacao
+
+	// Criar JSON exatamente no mesmo formato do cliente (sem espaços, em uma linha)
+	// A ordem dos campos precisa ser a mesma!
+	jsonStr := fmt.Sprintf(`{"id_requisicao":"%s","drone_id":"%s","rota":"%s","resultado":"%s","obstaculos":%s,"incidentes":%s,"data_hora_inicio":%d,"data_hora_fim":%d,"hash_anterior":"%s"}`,
+		l.IDRequisicao,
+		l.DroneID,
+		l.Rota,
+		l.Resultado,
+		obstaculosToJSON(l.Obstaculos),
+		incidentesToJSON(l.Incidentes),
+		l.DataHoraInicio,
+		l.DataHoraFim,
+		l.HashAnterior,
+	)
+
+	// Calcula o hash SHA256
+	hash := sha256.Sum256([]byte(jsonStr))
+	hashCalculado := hex.EncodeToString(hash[:])
+
+	// Log para depuração
+	log.Printf("[VERIFICACAO_HASH] String para hash: %s", jsonStr)
+	log.Printf("[VERIFICACAO_HASH] Hash recebido: %s", hashAtual)
+	log.Printf("[VERIFICACAO_HASH] Hash calculado: %s", hashCalculado)
+
+	return hashCalculado == hashAtual
+}
+
+// Funções auxiliares para converter slices para JSON string
+func obstaculosToJSON(obstaculos []string) string {
+	if len(obstaculos) == 0 {
+		return "[]"
+	}
+	result := "["
+	for i, o := range obstaculos {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf(`"%s"`, o)
+	}
+	result += "]"
+	return result
+}
+
+func incidentesToJSON(incidentes []string) string {
+	if len(incidentes) == 0 {
+		return "[]"
+	}
+	result := "["
+	for i, inc := range incidentes {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf(`"%s"`, inc)
+	}
+	result += "]"
+	return result
+}
+
+// VincularHashAnterior vincula este laudo ao anterior (encadeamento)
+func (l *LaudoMissao) VincularHashAnterior(hashAnterior string) {
+	l.HashAnterior = hashAnterior
+	l.CalcularHash() // Recalcula o hash com o novo hash anterior
+}
+
+// Resultados possíveis para uma missão
+const (
+	ResultadoSucesso = "sucesso"
+	ResultadoFalha   = "falha"
+	ResultadoParcial = "parcial"
+)
+
+
+
+[./companhias/cliente.go]
+-----------------------------------------
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"time"
+)
+
+func main() {
+	var (
+		brokerURL   = flag.String("broker", "http://localhost:8080", "URL do broker")
+		comando     = flag.String("cmd", "saldo", "Comando: saldo, requisitar, recarregar")
+		companhiaID = flag.String("cid", "COMP-A", "ID da companhia")
+		valor       = flag.Int("valor", 10, "Valor para recarga")
+		rota        = flag.String("rota", "Rota Norte", "Rota para escolta")
+	)
+	flag.Parse()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	switch *comando {
+	case "saldo":
+		consultarSaldo(client, *brokerURL, *companhiaID)
+
+	case "requisitar":
+		requisitarDrone(client, *brokerURL, *companhiaID, *rota)
+
+	case "recarregar":
+		recarregarCreditos(client, *brokerURL, *companhiaID, *valor)
+
+	default:
+		log.Fatalf("Comando desconhecido: %s", *comando)
+	}
+}
+
+func consultarSaldo(client *http.Client, brokerURL, companhiaID string) {
+	url := fmt.Sprintf("%s/saldo/%s", brokerURL, companhiaID)
+	resp, err := client.Get(url)
+	if err != nil {
+		log.Fatalf("Erro: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("Resposta: %s\n", body)
+}
+
+func requisitarDrone(client *http.Client, brokerURL, companhiaID, rota string) {
+	reqData := map[string]string{
+		"companhia_id": companhiaID,
+		"rota":         rota,
+	}
+	jsonData, _ := json.Marshal(reqData)
+
+	url := fmt.Sprintf("%s/requisitar-drone", brokerURL)
+	resp, err := client.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Fatalf("Erro: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("Resposta: %s\n", body)
+}
+
+func recarregarCreditos(client *http.Client, brokerURL, companhiaID string, valor int) {
+	reqData := map[string]interface{}{
+		"companhia_id": companhiaID,
+		"valor":        valor,
+	}
+	jsonData, _ := json.Marshal(reqData)
+
+	url := fmt.Sprintf("%s/recarregar", brokerURL)
+	resp, err := client.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Fatalf("Erro: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("Resposta: %s\n", body)
+}
+
+
+

@@ -126,11 +126,11 @@ func verificarSaldo() {
 		log.Printf("[COMPANY %s] Saldo atual: %.0f créditos", companyID, saldo)
 
 		if saldo < 50 {
-			log.Printf("[COMPANY %s] Saldo baixo! Recarregando 200 créditos...", companyID)
+			log.Printf("[COMPANY %s] ⚠️ Saldo baixo (%.0f < 50). Recarregando 200 créditos...", companyID, saldo)
 			recarregarCreditos(200)
+		} else {
+			log.Printf("[COMPANY %s] Saldo suficiente (%.0f). Nenhuma recarga necessária.", companyID, saldo)
 		}
-	} else {
-		log.Printf("[COMPANY %s] Resposta de saldo inesperada: %v", companyID, result)
 	}
 }
 
