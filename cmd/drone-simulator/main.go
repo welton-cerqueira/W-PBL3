@@ -16,15 +16,16 @@ import (
 )
 
 var (
-	droneID         string
-	addr            string // endereço completo (ex: "192.168.1.20:9001")
-	brokerList      string // lista de brokers: "broker1=192.168.1.10:8080,broker2=..."
-	brokers         map[string]string
-	registrado      bool
-	emMissao        bool
-	missaoAtual     string
-	rotaAtual       string
-	ultimoLiderAddr string // armazena o último líder conhecido
+	droneID              string
+	addr                 string // endereço completo (ex: "192.168.1.20:9001")
+	brokerList           string // lista de brokers: "broker1=192.168.1.10:8080,broker2=..."
+	brokers              map[string]string
+	registrado           bool
+	emMissao             bool
+	missaoAtual          string
+	rotaAtual            string
+	ultimoLiderAddr      string // armazena o último líder conhecido
+	missaoAtualCompanhia string
 )
 
 func main() {
@@ -190,21 +191,20 @@ func registrarNoBroker() {
 
 func iniciarServidorHTTP() {
 	http.HandleFunc("/iniciar-missao", func(w http.ResponseWriter, r *http.Request) {
-		var req map[string]interface{}
+		var req struct {
+			IDRequisicao string `json:"id_requisicao"`
+			Rota         string `json:"rota"`
+			DroneID      string `json:"drone_id"`
+			CompanhiaID  string `json:"companhia_id"`
+		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			log.Printf("[DRONE %s] Erro ao decodificar requisição: %v", droneID, err)
 			http.Error(w, "Erro ao decodificar", 400)
 			return
 		}
-		idRequisicao, ok := req["id_requisicao"].(string)
-		if !ok {
-			log.Printf("[DRONE %s] Campo id_requisicao inválido", droneID)
-			http.Error(w, "id_requisicao inválido", 400)
-			return
-		}
-		rota, _ := req["rota"].(string)
-		log.Printf("[DRONE %s] 🚀 Missão REAL recebida do broker: %s (Rota: %s)", droneID, idRequisicao, rota)
-		go executarMissaoReal(idRequisicao, rota)
+		log.Printf("[DRONE %s] 🚀 Missão REAL recebida do broker: %s (Rota: %s, Companhia: %s)", droneID, req.IDRequisicao, req.Rota, req.CompanhiaID)
+		missaoAtualCompanhia = req.CompanhiaID
+		go executarMissaoReal(req.IDRequisicao, req.Rota)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "missão iniciada"})
 	})
@@ -272,6 +272,7 @@ func enviarLaudo() {
 	laudo := map[string]interface{}{
 		"id_requisicao":    missaoAtual,
 		"drone_id":         droneID,
+		"companhia_id":     missaoAtualCompanhia,
 		"rota":             rotaAtual,
 		"resultado":        resultado,
 		"obstaculos":       obstaculos,

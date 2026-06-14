@@ -113,7 +113,7 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 	requisicao.DroneID = droneID
 	requisicao.Status = modelos.StatusAprovada
 
-	go s.notificarDrone(droneID, requisicao.IDRequisicao, req.Rota)
+	go s.notificarDrone(droneID, requisicao.IDRequisicao, req.Rota, req.CompanhiaID)
 
 	return c.JSON(fiber.Map{
 		"status":             "aprovada",
@@ -170,17 +170,6 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 	log.Printf("[LAUDO] Recebido laudo para missão: %s", laudo.IDRequisicao)
 	log.Printf("[LAUDO] Drone: %s, Resultado: %s", laudo.DroneID, laudo.Resultado)
 
-	// Verificação de hash desabilitada (conforme combinado)
-	/*
-	   if !laudo.VerificarIntegridade() {
-	       log.Printf("[ALERTA] Laudo com hash inválido detectado!")
-	       return c.Status(409).JSON(fiber.Map{
-	           "erro":   "Laudo adulterado detectado!",
-	           "status": "rejeitado",
-	       })
-	   }
-	*/
-
 	if !s.raftNode.EhLider() {
 		return c.Status(503).JSON(fiber.Map{
 			"erro":  "Este não é o nó líder",
@@ -188,25 +177,11 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		})
 	}
 
-	// --- Buscar a companhia associada a esta requisição ---
-	var companhiaID string
-	historico := s.estado.ObterHistorico()
-	for _, tx := range historico {
-		if tx.Tipo == consenso.TipoPagamento {
-			var dadosPagamento consenso.DadosPagamento
-			if err := json.Unmarshal(tx.Dados, &dadosPagamento); err == nil {
-				if dadosPagamento.IDRequisicao == laudo.IDRequisicao {
-					companhiaID = dadosPagamento.DeCompanhiaID
-					break
-				}
-			}
-		}
-	}
-
-	// Se não encontrou, usa um fallback (apenas para não quebrar)
+	// --- Obter a companhia diretamente do laudo (campo enviado pelo drone) ---
+	companhiaID := laudo.CompanhiaID
 	if companhiaID == "" {
 		companhiaID = "desconhecida"
-		log.Printf("[LAUDO] ⚠️ Não foi possível identificar a companhia para a missão %s", laudo.IDRequisicao)
+		log.Printf("[LAUDO] ⚠️ Laudo sem companhia_id para missão %s", laudo.IDRequisicao)
 	}
 
 	// Registra o laudo como transação no ledger
@@ -236,7 +211,6 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 	s.droneManager.LiberarDrone(laudo.DroneID)
 	log.Printf("[DRONE] Drone %s liberado após missão %s", laudo.DroneID, laudo.IDRequisicao)
 
-	// --- Exibir conteúdo detalhado do laudo e total de tokens (créditos) da companhia ---
 	saldo := s.estado.ObterSaldo(companhiaID)
 
 	log.Printf("========== LAUDO COMPLETO ==========")
@@ -297,7 +271,7 @@ func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 // notificarDrone via HTTP
 // ATENÇÃO: Esta função ainda assume que o drone está em "localhost". Para funcionar em rede,
 // o drone deve fornecer seu endereço IP completo no registro, e este endereço deve ser usado aqui.
-func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota string) {
+func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota, companhiaID string) {
 	endereco, existe := s.drones[droneID]
 	if !existe {
 		log.Printf("[BROKER] ❌ Drone %s não encontrado no registro", droneID)
@@ -309,6 +283,7 @@ func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota string) {
 		"id_requisicao": idRequisicao,
 		"drone_id":      droneID,
 		"rota":          rota,
+		"companhia_id":  companhiaID,
 	}
 	jsonData, _ := json.Marshal(payload)
 

@@ -16,14 +16,15 @@ type LaudoMissao struct {
 	ID              string   `json:"id"`
 	IDRequisicao    string   `json:"id_requisicao"`
 	DroneID         string   `json:"drone_id"`
+	CompanhiaID     string   `json:"companhia_id"` // NOVO
 	Rota            string   `json:"rota"`
 	Resultado       string   `json:"resultado"`
 	Obstaculos      []string `json:"obstaculos"`
 	Incidentes      []string `json:"incidentes"`
 	DataHoraInicio  int64    `json:"data_hora_inicio"`
 	DataHoraFim     int64    `json:"data_hora_fim"`
-	HashAnterior    string   `json:"hash_anterior"`    // Hash do laudo anterior (encadeamento)
-	HashVerificacao string   `json:"hash_verificacao"` // Hash deste laudo
+	HashAnterior    string   `json:"hash_anterior"`
+	HashVerificacao string   `json:"hash_verificacao"`
 }
 
 // NovoLaudoMissao cria um novo laudo de missão
