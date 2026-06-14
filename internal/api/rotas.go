@@ -250,21 +250,20 @@ func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 		DroneID string `json:"drone_id"`
 		Addr    string `json:"addr"`
 	}
-
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"erro": "Requisição inválida"})
 	}
 
-	// Armazenar informações do drone
 	s.droneManager.RegistrarDrone(req.DroneID, req.Addr)
 
-	// Armazenar porta/endereço para notificação
+	s.dronesMu.Lock()
 	if s.drones == nil {
 		s.drones = make(map[string]string)
 	}
 	s.drones[req.DroneID] = req.Addr
+	s.dronesMu.Unlock()
 
-	log.Printf("[DRONE] Drone %s registrado na porta %s", req.DroneID, req.Addr)
+	log.Printf("[DRONE] Drone %s registrado em %s", req.DroneID, req.Addr)
 	return c.JSON(fiber.Map{"status": "drone registrado", "drone_id": req.DroneID})
 }
 
@@ -272,7 +271,9 @@ func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 // ATENÇÃO: Esta função ainda assume que o drone está em "localhost". Para funcionar em rede,
 // o drone deve fornecer seu endereço IP completo no registro, e este endereço deve ser usado aqui.
 func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota, companhiaID string) {
+	s.dronesMu.RLock()
 	endereco, existe := s.drones[droneID]
+	s.dronesMu.RUnlock()
 	if !existe {
 		log.Printf("[BROKER] ❌ Drone %s não encontrado no registro", droneID)
 		return
@@ -326,11 +327,18 @@ func (s *ServidorAPI) verificarCadeiaLaudos(c *fiber.Ctx) error {
 
 // statusDrone retorna o status atual dos drones (para debug)
 func (s *ServidorAPI) statusDrone(c *fiber.Ctx) error {
+	s.dronesMu.RLock()
+	portas := make(map[string]string)
+	for k, v := range s.drones {
+		portas[k] = v
+	}
+	s.dronesMu.RUnlock()
+
 	drones := s.droneManager.ListarDrones()
 	return c.JSON(fiber.Map{
 		"drones": drones,
 		"total":  len(drones),
-		"portas": s.drones,
+		"portas": portas,
 	})
 }
 

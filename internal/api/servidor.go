@@ -1,6 +1,8 @@
 package api
 
 import (
+	"sync"
+
 	"W-PBL3/internal/consenso"
 	"W-PBL3/internal/drone"
 
@@ -16,6 +18,7 @@ type ServidorAPI struct {
 	raftNode     *consenso.TCPRaft
 	droneManager *drone.GerenciadorDrones
 	drones       map[string]string
+	dronesMu     sync.RWMutex
 }
 
 func NovoServidorAPI(porta string, raftNode *consenso.TCPRaft, droneManager *drone.GerenciadorDrones) *ServidorAPI {
