@@ -1,0 +1,46 @@
+2026/06/13 22:27:39 [COMPANY COMP-B] Iniciando simulador autônomo...
+2026/06/13 22:27:57 [COMPANY COMP-B] Solicitando drone para Rota Norte
+2026/06/13 22:27:57 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:27:57 [COMPANY COMP-B] Saldo atual: 40 créditos
+2026/06/13 22:27:57 [COMPANY COMP-B] Saldo baixo! Recarregando 200 créditos...
+2026/06/13 22:27:57 [COMPANY COMP-B] ✅ Recarga de 200 créditos realizada! Novo saldo: 240
+2026/06/13 22:28:21 [COMPANY COMP-B] Solicitando drone para Rota Oeste
+2026/06/13 22:28:21 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:28:34 [COMPANY COMP-B] Solicitando drone para Rota Oeste
+2026/06/13 22:28:34 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:28:47 [COMPANY COMP-B] Solicitando drone para Rota Central
+2026/06/13 22:28:47 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:29:10 [COMPANY COMP-B] Solicitando drone para Rota Oeste
+2026/06/13 22:29:10 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:29:42 [COMPANY COMP-B] Solicitando drone para Rota Norte
+2026/06/13 22:29:42 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:29:54 [COMPANY COMP-B] Solicitando drone para Rota Oeste
+2026/06/13 22:29:54 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:30:16 [COMPANY COMP-B] Solicitando drone para Rota Leste
+2026/06/13 22:30:16 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:30:40 [COMPANY COMP-B] Solicitando drone para Rota Oeste
+2026/06/13 22:30:40 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:31:07 [COMPANY COMP-B] Solicitando drone para Rota Sul
+2026/06/13 22:31:07 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:31:23 [COMPANY COMP-B] Solicitando drone para Rota Norte
+2026/06/13 22:31:23 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:31:23 [COMPANY COMP-B] Saldo atual: 140 créditos
+2026/06/13 22:31:54 [COMPANY COMP-B] Solicitando drone para Rota Norte
+2026/06/13 22:31:54 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:32:18 [COMPANY COMP-B] Solicitando drone para Rota Leste
+2026/06/13 22:32:18 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:32:18 [COMPANY COMP-B] Saldo atual: 120 créditos
+2026/06/13 22:32:33 [COMPANY COMP-B] Solicitando drone para Rota Oeste
+2026/06/13 22:32:33 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:32:33 [COMPANY COMP-B] Saldo atual: 110 créditos
+2026/06/13 22:32:50 [COMPANY COMP-B] Solicitando drone para Rota Norte
+2026/06/13 22:32:50 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:33:18 [COMPANY COMP-B] Solicitando drone para Rota Sul
+2026/06/13 22:33:18 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:33:46 [COMPANY COMP-B] Solicitando drone para Rota Sul
+2026/06/13 22:33:46 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:34:13 [COMPANY COMP-B] Solicitando drone para Rota Leste
+2026/06/13 22:34:13 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:34:35 [COMPANY COMP-B] Solicitando drone para Rota Norte
+2026/06/13 22:34:35 [COMPANY COMP-B] Resposta: HTTP 200: aprovada
+2026/06/13 22:34:35 [COMPANY COMP-B] Saldo atual: 60 créditos

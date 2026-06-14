@@ -1,0 +1,850 @@
+2026/06/13 22:27:33 [INICIO] Iniciando broker broker1 na porta 8080
+2026/06/13 22:27:33 [RAFT] Nó broker1 tornou-se LÍDER
+2026/06/13 22:27:33 [INICIAL] Créditos iniciais adicionados: COMP-A=100, COMP-B=50
+2026/06/13 22:27:33 [SUCESSO] Broker broker1 rodando em http://localhost:8080
+
+ ┌───────────────────────────────────────────────────┐ 
+ │                   W-PBL3 Broker                   │ 
+ │                  Fiber v2.52.13                   │ 
+ │               http://127.0.0.1:8080               │ 
+ │       (bound on host 0.0.0.0 and port 8080)       │ 
+ │                                                   │ 
+ │ Handlers ............ 22  Processes ........... 1 │ 
+ │ Prefork ....... Disabled  PID .............. 4730 │ 
+ └───────────────────────────────────────────────────┘ 
+
+22:27:33 | 200 |      84.336µs | 127.0.0.1 | GET | /health | -
+2026/06/13 22:27:35 [DRONE] Drone drone1 registrado na porta 9001
+2026/06/13 22:27:35 [DRONE] Drone drone1 registrado na porta 9001
+22:27:35 | 200 |     281.607µs | 127.0.0.1 | POST | /drone/registrar | -
+2026/06/13 22:27:35 [DRONE] Drone drone2 registrado na porta 9002
+2026/06/13 22:27:35 [DRONE] Drone drone2 registrado na porta 9002
+22:27:35 | 200 |     257.499µs | 127.0.0.1 | POST | /drone/registrar | -
+2026/06/13 22:27:36 [DRONE] Drone drone3 registrado na porta 9003
+2026/06/13 22:27:36 [DRONE] Drone drone3 registrado na porta 9003
+22:27:36 | 200 |     171.788µs | 127.0.0.1 | POST | /drone/registrar | -
+2026/06/13 22:27:36 [DRONE] Drone drone4 registrado na porta 9004
+2026/06/13 22:27:36 [DRONE] Drone drone4 registrado na porta 9004
+22:27:36 | 200 |     143.004µs | 127.0.0.1 | POST | /drone/registrar | -
+2026/06/13 22:27:37 [DRONE] Drone drone5 registrado na porta 9005
+2026/06/13 22:27:37 [DRONE] Drone drone5 registrado na porta 9005
+22:27:37 | 200 |      87.911µs | 127.0.0.1 | POST | /drone/registrar | -
+2026/06/13 22:27:37 [DRONE] Drone drone6 registrado na porta 9006
+2026/06/13 22:27:37 [DRONE] Drone drone6 registrado na porta 9006
+22:27:37 | 200 |     167.754µs | 127.0.0.1 | POST | /drone/registrar | -
+2026/06/13 22:27:38 [DRONE] Drone drone7 registrado na porta 9007
+2026/06/13 22:27:38 [DRONE] Drone drone7 registrado na porta 9007
+22:27:38 | 200 |     158.312µs | 127.0.0.1 | POST | /drone/registrar | -
+2026/06/13 22:27:38 [DRONE] Drone drone8 registrado na porta 9008
+2026/06/13 22:27:38 [DRONE] Drone drone8 registrado na porta 9008
+22:27:38 | 200 |     162.437µs | 127.0.0.1 | POST | /drone/registrar | -
+2026/06/13 22:27:57 [RAFT] Líder broker1 aplicou transação e851a94a-563d-49fc-9077-969eda395cea e replicaria para 0 nós
+2026/06/13 22:27:57 [DRONE] Drone drone7 alocado para missão 7f62beec-28e1-4f1e-82e9-e2eb30cbedd6 (rota: Rota Norte)
+22:27:57 | 200 |     550.656µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:27:57 | 200 |      19.342µs | 127.0.0.1 | GET | /saldo/COMP-B | -
+2026/06/13 22:27:57 [BROKER] ✅ Drone drone7 notificado para missão 7f62beec-28e1-4f1e-82e9-e2eb30cbedd6
+2026/06/13 22:27:57 [RAFT] Líder broker1 aplicou transação 90d6c5c1-cb5d-4974-be51-39922d435c7d e replicaria para 0 nós
+22:27:57 | 200 |     193.421µs | 127.0.0.1 | POST | /recarregar | -
+2026/06/13 22:28:05 [RAFT] Líder broker1 aplicou transação 518e76b3-4079-42ed-b022-e21607d8df25 e replicaria para 0 nós
+2026/06/13 22:28:05 [DRONE] Drone drone8 alocado para missão 0149feed-87f7-4c58-9ba1-2a40e28d6d88 (rota: Rota Oeste)
+22:28:04 | 200 |     229.539µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:28:05 [BROKER] ✅ Drone drone8 notificado para missão 0149feed-87f7-4c58-9ba1-2a40e28d6d88
+2026/06/13 22:28:10 [LAUDO] Recebido laudo para missão: 7f62beec-28e1-4f1e-82e9-e2eb30cbedd6
+2026/06/13 22:28:10 [LAUDO] Drone: drone7, Resultado: sucesso
+2026/06/13 22:28:10 [RAFT] Líder broker1 aplicou transação 4a7b4584-b827-4ee7-aad6-1329346dfcab e replicaria para 0 nós
+2026/06/13 22:28:10 [DRONE] Drone drone7 liberado e disponível novamente
+2026/06/13 22:28:10 [DRONE] Drone drone7 liberado após missão 7f62beec-28e1-4f1e-82e9-e2eb30cbedd6
+2026/06/13 22:28:10 ========== LAUDO COMPLETO ==========
+2026/06/13 22:28:10 ID Requisição: 7f62beec-28e1-4f1e-82e9-e2eb30cbedd6
+2026/06/13 22:28:10 Drone: drone7
+2026/06/13 22:28:10 Rota: Rota Norte
+2026/06/13 22:28:10 Resultado: sucesso
+2026/06/13 22:28:10 Obstáculos: [Navio cargueiro parado na rota]
+2026/06/13 22:28:10 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:28:10 Início: 1781400485 | Fim: 1781400490
+2026/06/13 22:28:10 Hash: hash_222810_7f62beec
+2026/06/13 22:28:10 Hash Anterior: 
+2026/06/13 22:28:10 Total de tokens (créditos) da companhia COMP-B: 240
+2026/06/13 22:28:10 ====================================
+22:28:09 | 200 |     859.121µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:28:19 [LAUDO] Recebido laudo para missão: 0149feed-87f7-4c58-9ba1-2a40e28d6d88
+2026/06/13 22:28:19 [LAUDO] Drone: drone8, Resultado: sucesso
+2026/06/13 22:28:19 [RAFT] Líder broker1 aplicou transação 674af909-438d-4200-aee7-a375a6b1679a e replicaria para 0 nós
+2026/06/13 22:28:19 [DRONE] Drone drone8 liberado e disponível novamente
+2026/06/13 22:28:19 [DRONE] Drone drone8 liberado após missão 0149feed-87f7-4c58-9ba1-2a40e28d6d88
+2026/06/13 22:28:19 ========== LAUDO COMPLETO ==========
+2026/06/13 22:28:19 ID Requisição: 0149feed-87f7-4c58-9ba1-2a40e28d6d88
+2026/06/13 22:28:19 Drone: drone8
+2026/06/13 22:28:19 Rota: Rota Oeste
+2026/06/13 22:28:19 Resultado: sucesso
+2026/06/13 22:28:19 Obstáculos: [Objeto flutuante na posição 23°S Navio cargueiro parado na rota]
+2026/06/13 22:28:19 Incidentes: [Perda de sinal por 3 segundos Bateria em nível crítico (15%)]
+2026/06/13 22:28:19 Início: 1781400489 | Fim: 1781400499
+2026/06/13 22:28:19 Hash: hash_222819_0149feed
+2026/06/13 22:28:19 Hash Anterior: 
+2026/06/13 22:28:19 Total de tokens (créditos) da companhia COMP-A: 90
+2026/06/13 22:28:19 ====================================
+22:28:18 | 200 |       695.4µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:28:21 [RAFT] Líder broker1 aplicou transação e1514e07-58d6-4062-a589-137e0b4ce74d e replicaria para 0 nós
+2026/06/13 22:28:21 [DRONE] Drone drone5 alocado para missão 7dca37a4-2948-4a3f-9d87-da73c39dec47 (rota: Rota Oeste)
+22:28:20 | 200 |     376.668µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:28:21 [BROKER] ✅ Drone drone5 notificado para missão 7dca37a4-2948-4a3f-9d87-da73c39dec47
+2026/06/13 22:28:23 [RAFT] Líder broker1 aplicou transação 2397b5f9-7397-433d-8d27-a26c24ecc92d e replicaria para 0 nós
+2026/06/13 22:28:23 [DRONE] Drone drone1 alocado para missão 11b67ecb-ea31-4877-bf95-dd24f4af1357 (rota: Rota Oeste)
+22:28:22 | 200 |      520.68µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:28:23 [BROKER] ✅ Drone drone1 notificado para missão 11b67ecb-ea31-4877-bf95-dd24f4af1357
+2026/06/13 22:28:30 [LAUDO] Recebido laudo para missão: 11b67ecb-ea31-4877-bf95-dd24f4af1357
+2026/06/13 22:28:30 [LAUDO] Drone: drone1, Resultado: sucesso
+2026/06/13 22:28:30 [RAFT] Líder broker1 aplicou transação 0f4222f6-bb8d-4762-b6e8-45d8c88952ff e replicaria para 0 nós
+2026/06/13 22:28:30 [DRONE] Drone drone1 liberado e disponível novamente
+2026/06/13 22:28:30 [DRONE] Drone drone1 liberado após missão 11b67ecb-ea31-4877-bf95-dd24f4af1357
+2026/06/13 22:28:30 ========== LAUDO COMPLETO ==========
+2026/06/13 22:28:30 ID Requisição: 11b67ecb-ea31-4877-bf95-dd24f4af1357
+2026/06/13 22:28:30 Drone: drone1
+2026/06/13 22:28:30 Rota: Rota Oeste
+2026/06/13 22:28:30 Resultado: sucesso
+2026/06/13 22:28:30 Obstáculos: [Zona de neblina densa]
+2026/06/13 22:28:30 Incidentes: nenhum
+2026/06/13 22:28:30 Início: 1781400503 | Fim: 1781400510
+2026/06/13 22:28:30 Hash: hash_222830_11b67ecb
+2026/06/13 22:28:30 Hash Anterior: 
+2026/06/13 22:28:30 Total de tokens (créditos) da companhia COMP-A: 80
+2026/06/13 22:28:30 ====================================
+22:28:29 | 200 |     648.741µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:28:34 [RAFT] Líder broker1 aplicou transação 3898736c-298b-45bc-956d-269530a931f8 e replicaria para 0 nós
+2026/06/13 22:28:34 [DRONE] Drone drone6 alocado para missão c8496804-03c9-4177-aac2-2e7040da45eb (rota: Rota Oeste)
+22:28:34 | 200 |     275.466µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:28:34 [LAUDO] Recebido laudo para missão: 7dca37a4-2948-4a3f-9d87-da73c39dec47
+2026/06/13 22:28:34 [LAUDO] Drone: drone5, Resultado: sucesso
+2026/06/13 22:28:34 [RAFT] Líder broker1 aplicou transação 82d75ab9-28eb-49ca-a3fd-a5dd9436e6fc e replicaria para 0 nós
+2026/06/13 22:28:34 [DRONE] Drone drone5 liberado e disponível novamente
+2026/06/13 22:28:34 [DRONE] Drone drone5 liberado após missão 7dca37a4-2948-4a3f-9d87-da73c39dec47
+2026/06/13 22:28:34 ========== LAUDO COMPLETO ==========
+2026/06/13 22:28:34 ID Requisição: 7dca37a4-2948-4a3f-9d87-da73c39dec47
+2026/06/13 22:28:34 Drone: drone5
+2026/06/13 22:28:34 Rota: Rota Oeste
+2026/06/13 22:28:34 Resultado: sucesso
+2026/06/13 22:28:34 Obstáculos: nenhum
+2026/06/13 22:28:34 Incidentes: nenhum
+2026/06/13 22:28:34 Início: 1781400504 | Fim: 1781400514
+2026/06/13 22:28:34 Hash: hash_222834_7dca37a4
+2026/06/13 22:28:34 Hash Anterior: 
+2026/06/13 22:28:34 Total de tokens (créditos) da companhia COMP-B: 220
+2026/06/13 22:28:34 ====================================
+22:28:34 | 200 |     759.019µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:28:34 [BROKER] ✅ Drone drone6 notificado para missão c8496804-03c9-4177-aac2-2e7040da45eb
+2026/06/13 22:28:35 [RAFT] Líder broker1 aplicou transação 930f960f-b704-42fc-8903-a6e0d2c4be4d e replicaria para 0 nós
+2026/06/13 22:28:35 [DRONE] Drone drone7 alocado para missão 989f8c15-29d4-4ab3-a24c-359e6495ae54 (rota: Rota Norte)
+22:28:35 | 200 |     372.359µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:28:35 [BROKER] ✅ Drone drone7 notificado para missão 989f8c15-29d4-4ab3-a24c-359e6495ae54
+2026/06/13 22:28:44 [LAUDO] Recebido laudo para missão: 989f8c15-29d4-4ab3-a24c-359e6495ae54
+2026/06/13 22:28:44 [LAUDO] Drone: drone7, Resultado: sucesso
+2026/06/13 22:28:44 [RAFT] Líder broker1 aplicou transação 0f514e3b-8aff-49a8-ba3d-7805d38b07f3 e replicaria para 0 nós
+2026/06/13 22:28:44 [DRONE] Drone drone7 liberado e disponível novamente
+2026/06/13 22:28:44 [DRONE] Drone drone7 liberado após missão 989f8c15-29d4-4ab3-a24c-359e6495ae54
+2026/06/13 22:28:44 ========== LAUDO COMPLETO ==========
+2026/06/13 22:28:44 ID Requisição: 989f8c15-29d4-4ab3-a24c-359e6495ae54
+2026/06/13 22:28:44 Drone: drone7
+2026/06/13 22:28:44 Rota: Rota Norte
+2026/06/13 22:28:44 Resultado: sucesso
+2026/06/13 22:28:44 Obstáculos: nenhum
+2026/06/13 22:28:44 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:28:44 Início: 1781400517 | Fim: 1781400524
+2026/06/13 22:28:44 Hash: hash_222844_989f8c15
+2026/06/13 22:28:44 Hash Anterior: 
+2026/06/13 22:28:44 Total de tokens (créditos) da companhia COMP-A: 70
+2026/06/13 22:28:44 ====================================
+22:28:44 | 200 |     699.802µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:28:47 [RAFT] Líder broker1 aplicou transação 585fcbed-4ec2-4600-b701-1cb9c31b5013 e replicaria para 0 nós
+2026/06/13 22:28:47 [DRONE] Drone drone5 alocado para missão 7ea6dc74-cb16-4599-8bf5-f059346d8252 (rota: Rota Central)
+22:28:47 | 200 |     363.009µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:28:47 [BROKER] ✅ Drone drone5 notificado para missão 7ea6dc74-cb16-4599-8bf5-f059346d8252
+2026/06/13 22:28:48 [LAUDO] Recebido laudo para missão: c8496804-03c9-4177-aac2-2e7040da45eb
+2026/06/13 22:28:48 [LAUDO] Drone: drone6, Resultado: sucesso
+2026/06/13 22:28:48 [RAFT] Líder broker1 aplicou transação 227ae247-7f75-4306-aac4-4053926ada28 e replicaria para 0 nós
+2026/06/13 22:28:48 [DRONE] Drone drone6 liberado e disponível novamente
+2026/06/13 22:28:48 [DRONE] Drone drone6 liberado após missão c8496804-03c9-4177-aac2-2e7040da45eb
+2026/06/13 22:28:48 ========== LAUDO COMPLETO ==========
+2026/06/13 22:28:48 ID Requisição: c8496804-03c9-4177-aac2-2e7040da45eb
+2026/06/13 22:28:48 Drone: drone6
+2026/06/13 22:28:48 Rota: Rota Oeste
+2026/06/13 22:28:48 Resultado: sucesso
+2026/06/13 22:28:48 Obstáculos: [Navio cargueiro parado na rota]
+2026/06/13 22:28:48 Incidentes: nenhum
+2026/06/13 22:28:48 Início: 1781400516 | Fim: 1781400528
+2026/06/13 22:28:48 Hash: hash_222848_c8496804
+2026/06/13 22:28:48 Hash Anterior: 
+2026/06/13 22:28:48 Total de tokens (créditos) da companhia COMP-B: 210
+2026/06/13 22:28:48 ====================================
+22:28:48 | 200 |     453.944µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:28:54 [RAFT] Líder broker1 aplicou transação c67f41f5-d6bd-4a07-aa31-4dd1d334ed49 e replicaria para 0 nós
+2026/06/13 22:28:54 [DRONE] Drone drone7 alocado para missão f354782c-4521-4ba5-b801-2d9f8f3b0962 (rota: Rota Sul)
+22:28:54 | 200 |      308.65µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:28:54 | 200 |      19.709µs | 127.0.0.1 | GET | /saldo/COMP-A | -
+2026/06/13 22:28:54 [BROKER] ✅ Drone drone7 notificado para missão f354782c-4521-4ba5-b801-2d9f8f3b0962
+2026/06/13 22:29:00 [LAUDO] Recebido laudo para missão: f354782c-4521-4ba5-b801-2d9f8f3b0962
+2026/06/13 22:29:00 [LAUDO] Drone: drone7, Resultado: sucesso
+2026/06/13 22:29:00 [RAFT] Líder broker1 aplicou transação cd10aa76-14ef-4f99-91fe-a8a848a91c1e e replicaria para 0 nós
+2026/06/13 22:29:00 [DRONE] Drone drone7 liberado e disponível novamente
+2026/06/13 22:29:00 [DRONE] Drone drone7 liberado após missão f354782c-4521-4ba5-b801-2d9f8f3b0962
+2026/06/13 22:29:00 ========== LAUDO COMPLETO ==========
+2026/06/13 22:29:00 ID Requisição: f354782c-4521-4ba5-b801-2d9f8f3b0962
+2026/06/13 22:29:00 Drone: drone7
+2026/06/13 22:29:00 Rota: Rota Sul
+2026/06/13 22:29:00 Resultado: sucesso
+2026/06/13 22:29:00 Obstáculos: nenhum
+2026/06/13 22:29:00 Incidentes: nenhum
+2026/06/13 22:29:00 Início: 1781400528 | Fim: 1781400540
+2026/06/13 22:29:00 Hash: hash_222900_f354782c
+2026/06/13 22:29:00 Hash Anterior: 
+2026/06/13 22:29:00 Total de tokens (créditos) da companhia COMP-A: 60
+2026/06/13 22:29:00 ====================================
+22:29:00 | 200 |     431.119µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:29:01 [LAUDO] Recebido laudo para missão: 7ea6dc74-cb16-4599-8bf5-f059346d8252
+2026/06/13 22:29:01 [LAUDO] Drone: drone5, Resultado: sucesso
+2026/06/13 22:29:01 [RAFT] Líder broker1 aplicou transação 56155a33-aa66-47f5-8dc9-47c2a1a850f1 e replicaria para 0 nós
+2026/06/13 22:29:01 [DRONE] Drone drone5 liberado e disponível novamente
+2026/06/13 22:29:01 [DRONE] Drone drone5 liberado após missão 7ea6dc74-cb16-4599-8bf5-f059346d8252
+2026/06/13 22:29:01 ========== LAUDO COMPLETO ==========
+2026/06/13 22:29:01 ID Requisição: 7ea6dc74-cb16-4599-8bf5-f059346d8252
+2026/06/13 22:29:01 Drone: drone5
+2026/06/13 22:29:01 Rota: Rota Central
+2026/06/13 22:29:01 Resultado: sucesso
+2026/06/13 22:29:01 Obstáculos: [Congestionamento detectado na rota]
+2026/06/13 22:29:01 Incidentes: nenhum
+2026/06/13 22:29:01 Início: 1781400534 | Fim: 1781400541
+2026/06/13 22:29:01 Hash: hash_222901_7ea6dc74
+2026/06/13 22:29:01 Hash Anterior: 
+2026/06/13 22:29:01 Total de tokens (créditos) da companhia COMP-B: 210
+2026/06/13 22:29:01 ====================================
+22:29:01 | 200 |     428.002µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:29:10 [RAFT] Líder broker1 aplicou transação b3b671ca-634a-414c-97c8-2bd2b142bba3 e replicaria para 0 nós
+2026/06/13 22:29:10 [DRONE] Drone drone1 alocado para missão b33d8ba1-f1cf-4d69-b86a-e9f54a388afd (rota: Rota Oeste)
+22:29:10 | 200 |      322.95µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:29:10 [BROKER] ✅ Drone drone1 notificado para missão b33d8ba1-f1cf-4d69-b86a-e9f54a388afd
+2026/06/13 22:29:18 [RAFT] Líder broker1 aplicou transação 9c350c17-b124-429d-8880-f94a18bdec9c e replicaria para 0 nós
+2026/06/13 22:29:18 [DRONE] Drone drone4 alocado para missão f4f0dbd0-3b9d-4c1c-80ac-ca023e580863 (rota: Rota Sul)
+22:29:18 | 200 |     244.206µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:29:18 | 200 |      19.892µs | 127.0.0.1 | GET | /saldo/COMP-A | -
+2026/06/13 22:29:18 [BROKER] ✅ Drone drone4 notificado para missão f4f0dbd0-3b9d-4c1c-80ac-ca023e580863
+2026/06/13 22:29:27 [LAUDO] Recebido laudo para missão: f4f0dbd0-3b9d-4c1c-80ac-ca023e580863
+2026/06/13 22:29:27 [LAUDO] Drone: drone4, Resultado: sucesso
+2026/06/13 22:29:27 [RAFT] Líder broker1 aplicou transação 55b9054d-97a8-4a7c-8912-114a13bf644c e replicaria para 0 nós
+2026/06/13 22:29:27 [DRONE] Drone drone4 liberado e disponível novamente
+2026/06/13 22:29:27 [DRONE] Drone drone4 liberado após missão f4f0dbd0-3b9d-4c1c-80ac-ca023e580863
+2026/06/13 22:29:27 ========== LAUDO COMPLETO ==========
+2026/06/13 22:29:27 ID Requisição: f4f0dbd0-3b9d-4c1c-80ac-ca023e580863
+2026/06/13 22:29:27 Drone: drone4
+2026/06/13 22:29:27 Rota: Rota Sul
+2026/06/13 22:29:27 Resultado: sucesso
+2026/06/13 22:29:27 Obstáculos: [Zona de neblina densa]
+2026/06/13 22:29:27 Incidentes: [Comunicação com broker instável]
+2026/06/13 22:29:27 Início: 1781400554 | Fim: 1781400567
+2026/06/13 22:29:27 Hash: hash_222927_f4f0dbd0
+2026/06/13 22:29:27 Hash Anterior: 
+2026/06/13 22:29:27 Total de tokens (créditos) da companhia COMP-A: 50
+2026/06/13 22:29:27 ====================================
+22:29:27 | 200 |     586.131µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:29:28 [LAUDO] Recebido laudo para missão: b33d8ba1-f1cf-4d69-b86a-e9f54a388afd
+2026/06/13 22:29:28 [LAUDO] Drone: drone1, Resultado: sucesso
+2026/06/13 22:29:28 [RAFT] Líder broker1 aplicou transação aa7056a7-0df0-482d-b650-f13f9c6660ed e replicaria para 0 nós
+2026/06/13 22:29:28 [DRONE] Drone drone1 liberado e disponível novamente
+2026/06/13 22:29:28 [DRONE] Drone drone1 liberado após missão b33d8ba1-f1cf-4d69-b86a-e9f54a388afd
+2026/06/13 22:29:28 ========== LAUDO COMPLETO ==========
+2026/06/13 22:29:28 ID Requisição: b33d8ba1-f1cf-4d69-b86a-e9f54a388afd
+2026/06/13 22:29:28 Drone: drone1
+2026/06/13 22:29:28 Rota: Rota Oeste
+2026/06/13 22:29:28 Resultado: sucesso
+2026/06/13 22:29:28 Obstáculos: [Zona de neblina densa]
+2026/06/13 22:29:28 Incidentes: nenhum
+2026/06/13 22:29:28 Início: 1781400558 | Fim: 1781400568
+2026/06/13 22:29:28 Hash: hash_222928_b33d8ba1
+2026/06/13 22:29:28 Hash Anterior: 
+2026/06/13 22:29:28 Total de tokens (créditos) da companhia COMP-B: 200
+2026/06/13 22:29:28 ====================================
+22:29:28 | 200 |      584.39µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:29:42 [RAFT] Líder broker1 aplicou transação c159954b-2164-44e6-8797-c58e1d67d4e4 e replicaria para 0 nós
+2026/06/13 22:29:42 [DRONE] Drone drone4 alocado para missão 1bc9d725-9660-4df9-bb81-c001ae3b2a3f (rota: Rota Norte)
+22:29:41 | 200 |     286.923µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:29:42 [BROKER] ✅ Drone drone4 notificado para missão 1bc9d725-9660-4df9-bb81-c001ae3b2a3f
+2026/06/13 22:29:47 [RAFT] Líder broker1 aplicou transação d9ad584b-8222-4e3d-a5a5-90379537f693 e replicaria para 0 nós
+2026/06/13 22:29:47 [DRONE] Drone drone2 alocado para missão 31769438-0622-4dcb-bbc3-537731102a7c (rota: Rota Norte)
+22:29:46 | 200 |     432.494µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:29:47 [BROKER] ✅ Drone drone2 notificado para missão 31769438-0622-4dcb-bbc3-537731102a7c
+2026/06/13 22:29:51 [LAUDO] Recebido laudo para missão: 1bc9d725-9660-4df9-bb81-c001ae3b2a3f
+2026/06/13 22:29:51 [LAUDO] Drone: drone4, Resultado: sucesso
+2026/06/13 22:29:51 [RAFT] Líder broker1 aplicou transação 9d339daa-1b24-4842-b675-460ee42230c7 e replicaria para 0 nós
+2026/06/13 22:29:51 [DRONE] Drone drone4 liberado e disponível novamente
+2026/06/13 22:29:51 [DRONE] Drone drone4 liberado após missão 1bc9d725-9660-4df9-bb81-c001ae3b2a3f
+2026/06/13 22:29:51 ========== LAUDO COMPLETO ==========
+2026/06/13 22:29:51 ID Requisição: 1bc9d725-9660-4df9-bb81-c001ae3b2a3f
+2026/06/13 22:29:51 Drone: drone4
+2026/06/13 22:29:51 Rota: Rota Norte
+2026/06/13 22:29:51 Resultado: sucesso
+2026/06/13 22:29:51 Obstáculos: [Objeto flutuante na posição 23°S]
+2026/06/13 22:29:51 Incidentes: nenhum
+2026/06/13 22:29:51 Início: 1781400579 | Fim: 1781400591
+2026/06/13 22:29:51 Hash: hash_222951_1bc9d725
+2026/06/13 22:29:51 Hash Anterior: 
+2026/06/13 22:29:51 Total de tokens (créditos) da companhia COMP-B: 190
+2026/06/13 22:29:51 ====================================
+22:29:51 | 200 |     713.919µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:29:54 [RAFT] Líder broker1 aplicou transação b29a6283-edba-4b7d-b881-2fe24641f36c e replicaria para 0 nós
+2026/06/13 22:29:54 [DRONE] Drone drone8 alocado para missão f562cb57-dd4a-463e-a047-6172de445475 (rota: Rota Oeste)
+22:29:54 | 200 |     249.248µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:29:54 [BROKER] ✅ Drone drone8 notificado para missão f562cb57-dd4a-463e-a047-6172de445475
+2026/06/13 22:29:54 [LAUDO] Recebido laudo para missão: 31769438-0622-4dcb-bbc3-537731102a7c
+2026/06/13 22:29:54 [LAUDO] Drone: drone2, Resultado: sucesso
+2026/06/13 22:29:54 [RAFT] Líder broker1 aplicou transação 02b6598a-7f6b-41f2-b6e3-156a49c21ae5 e replicaria para 0 nós
+2026/06/13 22:29:54 [DRONE] Drone drone2 liberado e disponível novamente
+2026/06/13 22:29:54 [DRONE] Drone drone2 liberado após missão 31769438-0622-4dcb-bbc3-537731102a7c
+2026/06/13 22:29:54 ========== LAUDO COMPLETO ==========
+2026/06/13 22:29:54 ID Requisição: 31769438-0622-4dcb-bbc3-537731102a7c
+2026/06/13 22:29:54 Drone: drone2
+2026/06/13 22:29:54 Rota: Rota Norte
+2026/06/13 22:29:54 Resultado: sucesso
+2026/06/13 22:29:54 Obstáculos: nenhum
+2026/06/13 22:29:54 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:29:54 Início: 1781400587 | Fim: 1781400594
+2026/06/13 22:29:54 Hash: hash_222954_31769438
+2026/06/13 22:29:54 Hash Anterior: 
+2026/06/13 22:29:54 Total de tokens (créditos) da companhia COMP-A: 40
+2026/06/13 22:29:54 ====================================
+22:29:54 | 200 |     446.611µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:30:08 [LAUDO] Recebido laudo para missão: f562cb57-dd4a-463e-a047-6172de445475
+2026/06/13 22:30:08 [LAUDO] Drone: drone8, Resultado: sucesso
+2026/06/13 22:30:08 [RAFT] Líder broker1 aplicou transação 8444eefa-4ab5-4f98-9d9d-2cc3d334d4eb e replicaria para 0 nós
+2026/06/13 22:30:08 [DRONE] Drone drone8 liberado e disponível novamente
+2026/06/13 22:30:08 [DRONE] Drone drone8 liberado após missão f562cb57-dd4a-463e-a047-6172de445475
+2026/06/13 22:30:08 ========== LAUDO COMPLETO ==========
+2026/06/13 22:30:08 ID Requisição: f562cb57-dd4a-463e-a047-6172de445475
+2026/06/13 22:30:08 Drone: drone8
+2026/06/13 22:30:08 Rota: Rota Oeste
+2026/06/13 22:30:08 Resultado: sucesso
+2026/06/13 22:30:08 Obstáculos: [Congestionamento detectado na rota Objeto flutuante na posição 23°S]
+2026/06/13 22:30:08 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:30:08 Início: 1781400599 | Fim: 1781400608
+2026/06/13 22:30:08 Hash: hash_223008_f562cb57
+2026/06/13 22:30:08 Hash Anterior: 
+2026/06/13 22:30:08 Total de tokens (créditos) da companhia COMP-B: 180
+2026/06/13 22:30:08 ====================================
+22:30:08 | 200 |     610.148µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:30:16 [RAFT] Líder broker1 aplicou transação 6897d29f-3ba6-4702-ad38-e55791f9a0c6 e replicaria para 0 nós
+2026/06/13 22:30:16 [DRONE] Drone drone3 alocado para missão b38aff95-c8ab-4c85-b5fd-b097b5ac4828 (rota: Rota Leste)
+22:30:16 | 200 |     330.009µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:30:16 [BROKER] ✅ Drone drone3 notificado para missão b38aff95-c8ab-4c85-b5fd-b097b5ac4828
+2026/06/13 22:30:17 [RAFT] Líder broker1 aplicou transação 9ea824aa-2c3c-475d-acfc-0c4ee01f53b8 e replicaria para 0 nós
+2026/06/13 22:30:17 [DRONE] Drone drone8 alocado para missão f87c992d-f86b-4f6f-8d9b-575dba9194dc (rota: Rota Norte)
+22:30:17 | 200 |     336.425µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:30:17 | 200 |      16.775µs | 127.0.0.1 | GET | /saldo/COMP-A | -
+2026/06/13 22:30:17 [RAFT] Líder broker1 aplicou transação 876c19f4-dc9d-4e23-9ac7-1c253e08c902 e replicaria para 0 nós
+22:30:17 | 200 |     118.345µs | 127.0.0.1 | POST2026/06/13 22:30:17 [BROKER] ✅ Drone drone8 notificado para missão f87c992d-f86b-4f6f-8d9b-575dba9194dc
+ | /recarregar | -
+2026/06/13 22:30:25 [LAUDO] Recebido laudo para missão: f87c992d-f86b-4f6f-8d9b-575dba9194dc
+2026/06/13 22:30:25 [LAUDO] Drone: drone8, Resultado: sucesso
+2026/06/13 22:30:25 [RAFT] Líder broker1 aplicou transação 13b0398a-fc67-4b77-862f-37bba2837367 e replicaria para 0 nós
+2026/06/13 22:30:25 [DRONE] Drone drone8 liberado e disponível novamente
+2026/06/13 22:30:25 [DRONE] Drone drone8 liberado após missão f87c992d-f86b-4f6f-8d9b-575dba9194dc
+2026/06/13 22:30:25 ========== LAUDO COMPLETO ==========
+2026/06/13 22:30:25 ID Requisição: f87c992d-f86b-4f6f-8d9b-575dba9194dc
+2026/06/13 22:30:25 Drone: drone8
+2026/06/13 22:30:25 Rota: Rota Norte
+2026/06/13 22:30:25 Resultado: sucesso
+2026/06/13 22:30:25 Obstáculos: nenhum
+2026/06/13 22:30:25 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:30:25 Início: 1781400617 | Fim: 1781400625
+2026/06/13 22:30:25 Hash: hash_223025_f87c992d
+2026/06/13 22:30:25 Hash Anterior: 
+2026/06/13 22:30:25 Total de tokens (créditos) da companhia COMP-A: 230
+2026/06/13 22:30:25 ====================================
+22:30:25 | 200 |     621.149µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:30:27 [LAUDO] Recebido laudo para missão: b38aff95-c8ab-4c85-b5fd-b097b5ac4828
+2026/06/13 22:30:27 [LAUDO] Drone: drone3, Resultado: sucesso
+2026/06/13 22:30:27 [RAFT] Líder broker1 aplicou transação 6f7f05d2-7605-4883-8236-f1ffb366f985 e replicaria para 0 nós
+2026/06/13 22:30:27 [DRONE] Drone drone3 liberado e disponível novamente
+2026/06/13 22:30:27 [DRONE] Drone drone3 liberado após missão b38aff95-c8ab-4c85-b5fd-b097b5ac4828
+2026/06/13 22:30:27 ========== LAUDO COMPLETO ==========
+2026/06/13 22:30:27 ID Requisição: b38aff95-c8ab-4c85-b5fd-b097b5ac4828
+2026/06/13 22:30:27 Drone: drone3
+2026/06/13 22:30:27 Rota: Rota Leste
+2026/06/13 22:30:27 Resultado: sucesso
+2026/06/13 22:30:27 Obstáculos: [Objeto flutuante na posição 23°S]
+2026/06/13 22:30:27 Incidentes: nenhum
+2026/06/13 22:30:27 Início: 1781400622 | Fim: 1781400627
+2026/06/13 22:30:27 Hash: hash_223027_b38aff95
+2026/06/13 22:30:27 Hash Anterior: 
+2026/06/13 22:30:27 Total de tokens (créditos) da companhia COMP-B: 170
+2026/06/13 22:30:27 ====================================
+22:30:27 | 200 |     732.802µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:30:38 [RAFT] Líder broker1 aplicou transação 8465d3b4-dedb-4deb-a8a0-980595af79af e replicaria para 0 nós
+2026/06/13 22:30:38 [DRONE] Drone drone7 alocado para missão eb42ad01-8938-476f-8cad-09dbeb93571c (rota: Rota Central)
+22:30:38 | 200 |     355.584µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:30:38 [BROKER] ✅ Drone drone7 notificado para missão eb42ad01-8938-476f-8cad-09dbeb93571c
+2026/06/13 22:30:40 [RAFT] Líder broker1 aplicou transação aef950b1-b44a-4187-aeb4-9293e63e2156 e replicaria para 0 nós
+2026/06/13 22:30:40 [DRONE] Drone drone4 alocado para missão fd945680-185d-4e70-b161-9279aa3925a0 (rota: Rota Oeste)
+22:30:40 | 200 |     312.316µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:30:40 [BROKER] ✅ Drone drone4 notificado para missão fd945680-185d-4e70-b161-9279aa3925a0
+2026/06/13 22:30:48 [LAUDO] Recebido laudo para missão: fd945680-185d-4e70-b161-9279aa3925a0
+2026/06/13 22:30:48 [LAUDO] Drone: drone4, Resultado: sucesso
+2026/06/13 22:30:48 [RAFT] Líder broker1 aplicou transação da7cf6f4-2f22-4983-bb6d-4f49f0062e78 e replicaria para 0 nós
+2026/06/13 22:30:48 [DRONE] Drone drone4 liberado e disponível novamente
+2026/06/13 22:30:48 [DRONE] Drone drone4 liberado após missão fd945680-185d-4e70-b161-9279aa3925a0
+2026/06/13 22:30:48 ========== LAUDO COMPLETO ==========
+2026/06/13 22:30:48 ID Requisição: fd945680-185d-4e70-b161-9279aa3925a0
+2026/06/13 22:30:48 Drone: drone4
+2026/06/13 22:30:48 Rota: Rota Oeste
+2026/06/13 22:30:48 Resultado: sucesso
+2026/06/13 22:30:48 Obstáculos: nenhum
+2026/06/13 22:30:48 Incidentes: nenhum
+2026/06/13 22:30:48 Início: 1781400635 | Fim: 1781400648
+2026/06/13 22:30:48 Hash: hash_223048_fd945680
+2026/06/13 22:30:48 Hash Anterior: 
+2026/06/13 22:30:48 Total de tokens (créditos) da companhia COMP-B: 160
+2026/06/13 22:30:48 ====================================
+22:30:48 | 200 |     622.341µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:30:54 [LAUDO] Recebido laudo para missão: eb42ad01-8938-476f-8cad-09dbeb93571c
+2026/06/13 22:30:54 [LAUDO] Drone: drone7, Resultado: sucesso
+2026/06/13 22:30:54 [RAFT] Líder broker1 aplicou transação 1111b1f4-f255-43b8-97f0-616b54f2275d e replicaria para 0 nós
+2026/06/13 22:30:54 [DRONE] Drone drone7 liberado e disponível novamente
+2026/06/13 22:30:54 [DRONE] Drone drone7 liberado após missão eb42ad01-8938-476f-8cad-09dbeb93571c
+2026/06/13 22:30:54 ========== LAUDO COMPLETO ==========
+2026/06/13 22:30:54 ID Requisição: eb42ad01-8938-476f-8cad-09dbeb93571c
+2026/06/13 22:30:54 Drone: drone7
+2026/06/13 22:30:54 Rota: Rota Central
+2026/06/13 22:30:54 Resultado: sucesso
+2026/06/13 22:30:54 Obstáculos: [Navio cargueiro parado na rota]
+2026/06/13 22:30:54 Incidentes: nenhum
+2026/06/13 22:30:54 Início: 1781400644 | Fim: 1781400654
+2026/06/13 22:30:54 Hash: hash_223054_eb42ad01
+2026/06/13 22:30:54 Hash Anterior: 
+2026/06/13 22:30:54 Total de tokens (créditos) da companhia COMP-A: 220
+2026/06/13 22:30:54 ====================================
+22:30:54 | 200 |     693.201µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:31:03 [RAFT] Líder broker1 aplicou transação b7a8b3cf-d281-4134-8d0f-707fa2eb8cd2 e replicaria para 0 nós
+2026/06/13 22:31:03 [DRONE] Drone drone4 alocado para missão a6b8119c-1ca2-41fe-b37b-1e4d2fe71593 (rota: Rota Central)
+22:31:03 | 200 |     323.683µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:31:03 | 200 |      31.626µs | 127.0.0.1 | GET | /saldo/COMP-A | -
+2026/06/13 22:31:03 [BROKER] ✅ Drone drone4 notificado para missão a6b8119c-1ca2-41fe-b37b-1e4d2fe71593
+2026/06/13 22:31:07 [RAFT] Líder broker1 aplicou transação 6b86edd9-f6c2-4d9b-b26e-52645628faff e replicaria para 0 nós
+2026/06/13 22:31:07 [DRONE] Drone drone6 alocado para missão 3a85bbf8-88c2-4ed2-a44f-7a0d3200d6be (rota: Rota Sul)
+22:31:07 | 200 |      256.49µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:31:07 [BROKER] ✅ Drone drone6 notificado para missão 3a85bbf8-88c2-4ed2-a44f-7a0d3200d6be
+2026/06/13 22:31:11 [LAUDO] Recebido laudo para missão: a6b8119c-1ca2-41fe-b37b-1e4d2fe71593
+2026/06/13 22:31:11 [LAUDO] Drone: drone4, Resultado: sucesso
+2026/06/13 22:31:11 [RAFT] Líder broker1 aplicou transação 049afc2a-e278-4f2e-a00b-7870bc58d914 e replicaria para 0 nós
+2026/06/13 22:31:11 [DRONE] Drone drone4 liberado e disponível novamente
+2026/06/13 22:31:11 [DRONE] Drone drone4 liberado após missão a6b8119c-1ca2-41fe-b37b-1e4d2fe71593
+2026/06/13 22:31:11 ========== LAUDO COMPLETO ==========
+2026/06/13 22:31:11 ID Requisição: a6b8119c-1ca2-41fe-b37b-1e4d2fe71593
+2026/06/13 22:31:11 Drone: drone4
+2026/06/13 22:31:11 Rota: Rota Central
+2026/06/13 22:31:11 Resultado: sucesso
+2026/06/13 22:31:11 Obstáculos: [Zona de neblina densa]
+2026/06/13 22:31:11 Incidentes: [Comunicação com broker instável]
+2026/06/13 22:31:11 Início: 1781400661 | Fim: 1781400671
+2026/06/13 22:31:11 Hash: hash_223111_a6b8119c
+2026/06/13 22:31:11 Hash Anterior: 
+2026/06/13 22:31:11 Total de tokens (créditos) da companhia COMP-A: 210
+2026/06/13 22:31:11 ====================================
+22:31:11 | 200 |     621.607µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:31:20 [LAUDO] Recebido laudo para missão: 3a85bbf8-88c2-4ed2-a44f-7a0d3200d6be
+2026/06/13 22:31:20 [LAUDO] Drone: drone6, Resultado: sucesso
+2026/06/13 22:31:20 [RAFT] Líder broker1 aplicou transação ee90de64-3958-4c18-be40-a648c258cabf e replicaria para 0 nós
+2026/06/13 22:31:20 [DRONE] Drone drone6 liberado e disponível novamente
+2026/06/13 22:31:20 [DRONE] Drone drone6 liberado após missão 3a85bbf8-88c2-4ed2-a44f-7a0d3200d6be
+2026/06/13 22:31:20 ========== LAUDO COMPLETO ==========
+2026/06/13 22:31:20 ID Requisição: 3a85bbf8-88c2-4ed2-a44f-7a0d3200d6be
+2026/06/13 22:31:20 Drone: drone6
+2026/06/13 22:31:20 Rota: Rota Sul
+2026/06/13 22:31:20 Resultado: sucesso
+2026/06/13 22:31:20 Obstáculos: [Congestionamento detectado na rota]
+2026/06/13 22:31:20 Incidentes: nenhum
+2026/06/13 22:31:20 Início: 1781400668 | Fim: 1781400680
+2026/06/13 22:31:20 Hash: hash_223120_3a85bbf8
+2026/06/13 22:31:20 Hash Anterior: 
+2026/06/13 22:31:20 Total de tokens (créditos) da companhia COMP-B: 150
+2026/06/13 22:31:20 ====================================
+22:31:19 | 200 |     657.083µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:31:22 [RAFT] Líder broker1 aplicou transação 8d2ca4dc-d464-497a-ad00-ce354b757441 e replicaria para 0 nós
+2026/06/13 22:31:22 [DRONE] Drone drone4 alocado para missão 9be822dd-c3e7-4a9a-a208-38c257dc11f2 (rota: Rota Leste)
+22:31:22 | 200 |     972.975µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:31:22 [BROKER] ✅ Drone drone4 notificado para missão 9be822dd-c3e7-4a9a-a208-38c257dc11f2
+2026/06/13 22:31:23 [RAFT] Líder broker1 aplicou transação 14bdabf4-0e71-46f2-824b-b43ee2316326 e replicaria para 0 nós
+2026/06/13 22:31:23 [DRONE] Drone drone6 alocado para missão d576c761-40a1-4f8b-9b09-0d0f7eae8871 (rota: Rota Norte)
+22:31:22 | 200 |     260.431µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:31:22 | 200 |      18.425µs | 127.0.0.1 | GET | /saldo/COMP-B | -
+2026/06/13 22:31:23 [BROKER] ✅ Drone drone6 notificado para missão d576c761-40a1-4f8b-9b09-0d0f7eae8871
+2026/06/13 22:31:30 [LAUDO] Recebido laudo para missão: d576c761-40a1-4f8b-9b09-0d0f7eae8871
+2026/06/13 22:31:30 [LAUDO] Drone: drone6, Resultado: sucesso
+2026/06/13 22:31:30 [RAFT] Líder broker1 aplicou transação 8d5a89d7-45b2-4d45-8ad5-743eb78ddf5f e replicaria para 0 nós
+2026/06/13 22:31:30 [DRONE] Drone drone6 liberado e disponível novamente
+2026/06/13 22:31:30 [DRONE] Drone drone6 liberado após missão d576c761-40a1-4f8b-9b09-0d0f7eae8871
+2026/06/13 22:31:30 ========== LAUDO COMPLETO ==========
+2026/06/13 22:31:30 ID Requisição: d576c761-40a1-4f8b-9b09-0d0f7eae8871
+2026/06/13 22:31:30 Drone: drone6
+2026/06/13 22:31:30 Rota: Rota Norte
+2026/06/13 22:31:30 Resultado: sucesso
+2026/06/13 22:31:30 Obstáculos: [Congestionamento detectado na rota Objeto flutuante na posição 23°S Navio cargueiro parado na rota]
+2026/06/13 22:31:30 Incidentes: [Bateria em nível crítico (15%)]
+2026/06/13 22:31:30 Início: 1781400677 | Fim: 1781400690
+2026/06/13 22:31:30 Hash: hash_223130_d576c761
+2026/06/13 22:31:30 Hash Anterior: 
+2026/06/13 22:31:30 Total de tokens (créditos) da companhia COMP-B: 140
+2026/06/13 22:31:30 ====================================
+22:31:29 | 200 |     627.016µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:31:36 [LAUDO] Recebido laudo para missão: 9be822dd-c3e7-4a9a-a208-38c257dc11f2
+2026/06/13 22:31:36 [LAUDO] Drone: drone4, Resultado: sucesso
+2026/06/13 22:31:36 [RAFT] Líder broker1 aplicou transação 4b3bb2b5-1b37-422e-91ec-000a548faca6 e replicaria para 0 nós
+2026/06/13 22:31:36 [DRONE] Drone drone4 liberado e disponível novamente
+2026/06/13 22:31:36 [DRONE] Drone drone4 liberado após missão 9be822dd-c3e7-4a9a-a208-38c257dc11f2
+2026/06/13 22:31:36 ========== LAUDO COMPLETO ==========
+2026/06/13 22:31:36 ID Requisição: 9be822dd-c3e7-4a9a-a208-38c257dc11f2
+2026/06/13 22:31:36 Drone: drone4
+2026/06/13 22:31:36 Rota: Rota Leste
+2026/06/13 22:31:36 Resultado: sucesso
+2026/06/13 22:31:36 Obstáculos: [Objeto flutuante na posição 23°S]
+2026/06/13 22:31:36 Incidentes: nenhum
+2026/06/13 22:31:36 Início: 1781400682 | Fim: 1781400696
+2026/06/13 22:31:36 Hash: hash_223136_9be822dd
+2026/06/13 22:31:36 Hash Anterior: 
+2026/06/13 22:31:36 Total de tokens (créditos) da companhia COMP-A: 200
+2026/06/13 22:31:36 ====================================
+22:31:35 | 200 |     646.083µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:31:52 [RAFT] Líder broker1 aplicou transação c6d7e109-3960-4841-acd2-3dc72b058106 e replicaria para 0 nós
+2026/06/13 22:31:52 [DRONE] Drone drone7 alocado para missão bb046589-565f-422a-b123-d647f37fd290 (rota: Rota Norte)
+22:31:51 | 200 |     271.799µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:31:52 [BROKER] ✅ Drone drone7 notificado para missão bb046589-565f-422a-b123-d647f37fd290
+2026/06/13 22:31:54 [RAFT] Líder broker1 aplicou transação 7ce26549-c540-4f53-8c51-d021f9def775 e replicaria para 0 nós
+2026/06/13 22:31:54 [DRONE] Drone drone4 alocado para missão 4534d356-53b2-46f2-a0e3-f3965ff6447b (rota: Rota Norte)
+22:31:54 | 200 |     320.292µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:31:54 [BROKER] ✅ Drone drone4 notificado para missão 4534d356-53b2-46f2-a0e3-f3965ff6447b
+2026/06/13 22:32:00 [LAUDO] Recebido laudo para missão: 4534d356-53b2-46f2-a0e3-f3965ff6447b
+2026/06/13 22:32:00 [LAUDO] Drone: drone4, Resultado: falha
+2026/06/13 22:32:00 [RAFT] Líder broker1 aplicou transação 22257d07-71a0-4a6d-b83f-cb1469606551 e replicaria para 0 nós
+2026/06/13 22:32:00 [DRONE] Drone drone4 liberado e disponível novamente
+2026/06/13 22:32:00 [DRONE] Drone drone4 liberado após missão 4534d356-53b2-46f2-a0e3-f3965ff6447b
+2026/06/13 22:32:00 ========== LAUDO COMPLETO ==========
+2026/06/13 22:32:00 ID Requisição: 4534d356-53b2-46f2-a0e3-f3965ff6447b
+2026/06/13 22:32:00 Drone: drone4
+2026/06/13 22:32:00 Rota: Rota Norte
+2026/06/13 22:32:00 Resultado: falha
+2026/06/13 22:32:00 Obstáculos: [Congestionamento detectado na rota Objeto flutuante na posição 23°S Navio cargueiro parado na rota]
+2026/06/13 22:32:00 Incidentes: [Perda de sinal por 3 segundos Missão não completada devido a falha técnica]
+2026/06/13 22:32:00 Início: 1781400708 | Fim: 1781400720
+2026/06/13 22:32:00 Hash: hash_223200_4534d356
+2026/06/13 22:32:00 Hash Anterior: 
+2026/06/13 22:32:00 Total de tokens (créditos) da companhia COMP-B: 130
+2026/06/13 22:32:00 ====================================
+22:32:00 | 200 |     532.689µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:32:06 [LAUDO] Recebido laudo para missão: bb046589-565f-422a-b123-d647f37fd290
+2026/06/13 22:32:06 [LAUDO] Drone: drone7, Resultado: sucesso
+2026/06/13 22:32:06 [RAFT] Líder broker1 aplicou transação d1112f9e-5eb2-42c8-9339-8f06dbd1712e e replicaria para 0 nós
+2026/06/13 22:32:06 [DRONE] Drone drone7 liberado e disponível novamente
+2026/06/13 22:32:06 [DRONE] Drone drone7 liberado após missão bb046589-565f-422a-b123-d647f37fd290
+2026/06/13 22:32:06 ========== LAUDO COMPLETO ==========
+2026/06/13 22:32:06 ID Requisição: bb046589-565f-422a-b123-d647f37fd290
+2026/06/13 22:32:06 Drone: drone7
+2026/06/13 22:32:06 Rota: Rota Norte
+2026/06/13 22:32:06 Resultado: sucesso
+2026/06/13 22:32:06 Obstáculos: nenhum
+2026/06/13 22:32:06 Incidentes: nenhum
+2026/06/13 22:32:06 Início: 1781400715 | Fim: 1781400726
+2026/06/13 22:32:06 Hash: hash_223206_bb046589
+2026/06/13 22:32:06 Hash Anterior: 
+2026/06/13 22:32:06 Total de tokens (créditos) da companhia COMP-A: 190
+2026/06/13 22:32:06 ====================================
+22:32:05 | 200 |     912.657µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:32:18 [RAFT] Líder broker1 aplicou transação fe602f2b-715f-456c-98f9-0d37b38b4781 e replicaria para 0 nós
+2026/06/13 22:32:18 [DRONE] Drone drone7 alocado para missão 3691d940-862f-491b-a585-7d596860c702 (rota: Rota Leste)
+22:32:17 | 200 |     278.674µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:32:17 | 200 |      14.484µs | 127.0.0.1 | GET | /saldo/COMP-B | -
+2026/06/13 22:32:18 [BROKER] ✅ Drone drone7 notificado para missão 3691d940-862f-491b-a585-7d596860c702
+2026/06/13 22:32:23 [RAFT] Líder broker1 aplicou transação 3efa1f07-ba34-4930-a071-fefd2933608f e replicaria para 0 nós
+2026/06/13 22:32:23 [DRONE] Drone drone2 alocado para missão 66bd4fa7-96bc-45dc-bc31-1858c0e291cb (rota: Rota Leste)
+22:32:23 | 200 |      279.04µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:32:23 | 200 |      16.592µs | 127.0.0.1 | GET | /saldo/COMP-A | -
+2026/06/13 22:32:23 [BROKER] ✅ Drone drone2 notificado para missão 66bd4fa7-96bc-45dc-bc31-1858c0e291cb
+2026/06/13 22:32:31 [LAUDO] Recebido laudo para missão: 3691d940-862f-491b-a585-7d596860c702
+2026/06/13 22:32:31 [LAUDO] Drone: drone7, Resultado: sucesso
+2026/06/13 22:32:31 [RAFT] Líder broker1 aplicou transação 95f833ff-8700-432f-8a24-bfe7508afb22 e replicaria para 0 nós
+2026/06/13 22:32:31 [DRONE] Drone drone7 liberado e disponível novamente
+2026/06/13 22:32:31 [DRONE] Drone drone7 liberado após missão 3691d940-862f-491b-a585-7d596860c702
+2026/06/13 22:32:31 ========== LAUDO COMPLETO ==========
+2026/06/13 22:32:31 ID Requisição: 3691d940-862f-491b-a585-7d596860c702
+2026/06/13 22:32:31 Drone: drone7
+2026/06/13 22:32:31 Rota: Rota Leste
+2026/06/13 22:32:31 Resultado: sucesso
+2026/06/13 22:32:31 Obstáculos: nenhum
+2026/06/13 22:32:31 Incidentes: [Bateria em nível crítico (15%)]
+2026/06/13 22:32:31 Início: 1781400737 | Fim: 1781400751
+2026/06/13 22:32:31 Hash: hash_223231_3691d940
+2026/06/13 22:32:31 Hash Anterior: 
+2026/06/13 22:32:31 Total de tokens (créditos) da companhia COMP-B: 120
+2026/06/13 22:32:31 ====================================
+22:32:31 | 200 |     401.602µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:32:33 [RAFT] Líder broker1 aplicou transação e511310f-853d-452e-8465-f3c539167a6d e replicaria para 0 nós
+2026/06/13 22:32:33 [DRONE] Drone drone3 alocado para missão 35a4394e-a749-4b5c-95ee-26967ca3d2b9 (rota: Rota Oeste)
+22:32:33 | 200 |     291.324µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:32:33 | 200 |      13.842µs | 127.0.0.1 | GET | /saldo/COMP-B | -
+2026/06/13 22:32:33 [BROKER] ✅ Drone drone3 notificado para missão 35a4394e-a749-4b5c-95ee-26967ca3d2b9
+2026/06/13 22:32:35 [LAUDO] Recebido laudo para missão: 66bd4fa7-96bc-45dc-bc31-1858c0e291cb
+2026/06/13 22:32:35 [LAUDO] Drone: drone2, Resultado: sucesso
+2026/06/13 22:32:35 [RAFT] Líder broker1 aplicou transação 37e47fe4-6d18-4703-ac2c-758d24f823d6 e replicaria para 0 nós
+2026/06/13 22:32:35 [DRONE] Drone drone2 liberado e disponível novamente
+2026/06/13 22:32:35 [DRONE] Drone drone2 liberado após missão 66bd4fa7-96bc-45dc-bc31-1858c0e291cb
+2026/06/13 22:32:35 ========== LAUDO COMPLETO ==========
+2026/06/13 22:32:35 ID Requisição: 66bd4fa7-96bc-45dc-bc31-1858c0e291cb
+2026/06/13 22:32:35 Drone: drone2
+2026/06/13 22:32:35 Rota: Rota Leste
+2026/06/13 22:32:35 Resultado: sucesso
+2026/06/13 22:32:35 Obstáculos: nenhum
+2026/06/13 22:32:35 Incidentes: nenhum
+2026/06/13 22:32:35 Início: 1781400748 | Fim: 1781400755
+2026/06/13 22:32:35 Hash: hash_223235_66bd4fa7
+2026/06/13 22:32:35 Hash Anterior: 
+2026/06/13 22:32:35 Total de tokens (créditos) da companhia COMP-A: 180
+2026/06/13 22:32:35 ====================================
+22:32:35 | 200 |     675.509µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:32:40 [LAUDO] Recebido laudo para missão: 35a4394e-a749-4b5c-95ee-26967ca3d2b9
+2026/06/13 22:32:40 [LAUDO] Drone: drone3, Resultado: sucesso
+2026/06/13 22:32:40 [RAFT] Líder broker1 aplicou transação 4b09206a-1bb0-404d-93b3-6d8d0ca98081 e replicaria para 0 nós
+2026/06/13 22:32:40 [DRONE] Drone drone3 liberado e disponível novamente
+2026/06/13 22:32:40 [DRONE] Drone drone3 liberado após missão 35a4394e-a749-4b5c-95ee-26967ca3d2b9
+2026/06/13 22:32:40 ========== LAUDO COMPLETO ==========
+2026/06/13 22:32:40 ID Requisição: 35a4394e-a749-4b5c-95ee-26967ca3d2b9
+2026/06/13 22:32:40 Drone: drone3
+2026/06/13 22:32:40 Rota: Rota Oeste
+2026/06/13 22:32:40 Resultado: sucesso
+2026/06/13 22:32:40 Obstáculos: [Congestionamento detectado na rota]
+2026/06/13 22:32:40 Incidentes: nenhum
+2026/06/13 22:32:40 Início: 1781400748 | Fim: 1781400760
+2026/06/13 22:32:40 Hash: hash_223240_35a4394e
+2026/06/13 22:32:40 Hash Anterior: 
+2026/06/13 22:32:40 Total de tokens (créditos) da companhia COMP-B: 110
+2026/06/13 22:32:40 ====================================
+22:32:40 | 200 |     698.334µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:32:50 [RAFT] Líder broker1 aplicou transação bbd708a8-18e6-4237-b909-db8417f3c34d e replicaria para 0 nós
+2026/06/13 22:32:50 [DRONE] Drone drone2 alocado para missão baed2490-75dc-4400-8f8b-9706a38d9cbd (rota: Rota Norte)
+22:32:50 | 200 |     382.168µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:32:50 [BROKER] ✅ Drone drone2 notificado para missão baed2490-75dc-4400-8f8b-9706a38d9cbd
+2026/06/13 22:32:55 [RAFT] Líder broker1 aplicou transação f4a82073-6288-45a0-a109-7437a4e1d19f e replicaria para 0 nós
+2026/06/13 22:32:55 [DRONE] Drone drone5 alocado para missão d3522f3d-0ddb-492d-bc6a-4bd71009ce5c (rota: Rota Norte)
+22:32:52 | 200 |     275.832µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:32:55 [BROKER] ✅ Drone drone5 notificado para missão d3522f3d-0ddb-492d-bc6a-4bd71009ce5c
+2026/06/13 22:33:04 [LAUDO] Recebido laudo para missão: baed2490-75dc-4400-8f8b-9706a38d9cbd
+2026/06/13 22:33:04 [LAUDO] Drone: drone2, Resultado: sucesso
+2026/06/13 22:33:04 [RAFT] Líder broker1 aplicou transação b04aa487-a956-4508-8257-ee66b8a97e25 e replicaria para 0 nós
+2026/06/13 22:33:04 [DRONE] Drone drone2 liberado e disponível novamente
+2026/06/13 22:33:04 [DRONE] Drone drone2 liberado após missão baed2490-75dc-4400-8f8b-9706a38d9cbd
+2026/06/13 22:33:04 ========== LAUDO COMPLETO ==========
+2026/06/13 22:33:04 ID Requisição: baed2490-75dc-4400-8f8b-9706a38d9cbd
+2026/06/13 22:33:04 Drone: drone2
+2026/06/13 22:33:04 Rota: Rota Norte
+2026/06/13 22:33:04 Resultado: sucesso
+2026/06/13 22:33:04 Obstáculos: [Zona de neblina densa]
+2026/06/13 22:33:04 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:33:04 Início: 1781400776 | Fim: 1781400784
+2026/06/13 22:33:04 Hash: hash_223304_baed2490
+2026/06/13 22:33:04 Hash Anterior: 
+2026/06/13 22:33:04 Total de tokens (créditos) da companhia COMP-B: 100
+2026/06/13 22:33:04 ====================================
+22:33:04 | 200 |     729.869µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:33:05 [RAFT] Líder broker1 aplicou transação ae8dec8c-b9af-4a2b-b600-e2e073a9357b e replicaria para 0 nós
+2026/06/13 22:33:05 [DRONE] Drone drone6 alocado para missão 1708af58-2bbb-402a-be37-161775abe4ce (rota: Rota Sul)
+22:33:05 | 200 |     305.716µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:33:05 [BROKER] ✅ Drone drone6 notificado para missão 1708af58-2bbb-402a-be37-161775abe4ce
+2026/06/13 22:33:09 [LAUDO] Recebido laudo para missão: d3522f3d-0ddb-492d-bc6a-4bd71009ce5c
+2026/06/13 22:33:09 [LAUDO] Drone: drone5, Resultado: sucesso
+2026/06/13 22:33:09 [RAFT] Líder broker1 aplicou transação f5e0d98b-2288-4762-978f-4be5c0033835 e replicaria para 0 nós
+2026/06/13 22:33:09 [DRONE] Drone drone5 liberado e disponível novamente
+2026/06/13 22:33:09 [DRONE] Drone drone5 liberado após missão d3522f3d-0ddb-492d-bc6a-4bd71009ce5c
+2026/06/13 22:33:09 ========== LAUDO COMPLETO ==========
+2026/06/13 22:33:09 ID Requisição: d3522f3d-0ddb-492d-bc6a-4bd71009ce5c
+2026/06/13 22:33:09 Drone: drone5
+2026/06/13 22:33:09 Rota: Rota Norte
+2026/06/13 22:33:09 Resultado: sucesso
+2026/06/13 22:33:09 Obstáculos: [Congestionamento detectado na rota]
+2026/06/13 22:33:09 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:33:09 Início: 1781400776 | Fim: 1781400789
+2026/06/13 22:33:09 Hash: hash_223309_d3522f3d
+2026/06/13 22:33:09 Hash Anterior: 
+2026/06/13 22:33:09 Total de tokens (créditos) da companhia COMP-A: 160
+2026/06/13 22:33:09 ====================================
+22:33:09 | 200 |      804.67µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:33:12 [LAUDO] Recebido laudo para missão: 1708af58-2bbb-402a-be37-161775abe4ce
+2026/06/13 22:33:12 [LAUDO] Drone: drone6, Resultado: sucesso
+2026/06/13 22:33:12 [RAFT] Líder broker1 aplicou transação 51c347de-a96b-4769-ac4b-572086d2ba91 e replicaria para 0 nós
+2026/06/13 22:33:12 [DRONE] Drone drone6 liberado e disponível novamente
+2026/06/13 22:33:12 [DRONE] Drone drone6 liberado após missão 1708af58-2bbb-402a-be37-161775abe4ce
+2026/06/13 22:33:12 ========== LAUDO COMPLETO ==========
+2026/06/13 22:33:12 ID Requisição: 1708af58-2bbb-402a-be37-161775abe4ce
+2026/06/13 22:33:12 Drone: drone6
+2026/06/13 22:33:12 Rota: Rota Sul
+2026/06/13 22:33:12 Resultado: sucesso
+2026/06/13 22:33:12 Obstáculos: [Congestionamento detectado na rota]
+2026/06/13 22:33:12 Incidentes: nenhum
+2026/06/13 22:33:12 Início: 1781400778 | Fim: 1781400792
+2026/06/13 22:33:12 Hash: hash_223312_1708af58
+2026/06/13 22:33:12 Hash Anterior: 
+2026/06/13 22:33:12 Total de tokens (créditos) da companhia COMP-A: 160
+2026/06/13 22:33:12 ====================================
+22:33:12 | 200 |     656.441µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:33:18 [RAFT] Líder broker1 aplicou transação 1da83690-a27b-4492-b4d1-f4bf2343708d e replicaria para 0 nós
+2026/06/13 22:33:18 [DRONE] Drone drone8 alocado para missão 55f2c833-470c-47e0-b401-6ea971c7b1a1 (rota: Rota Sul)
+22:33:18 | 200 |     316.991µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:33:18 [BROKER] ✅ Drone drone8 notificado para missão 55f2c833-470c-47e0-b401-6ea971c7b1a1
+2026/06/13 22:33:18 [RAFT] Líder broker1 aplicou transação 2310334c-1d8c-4c51-a107-51c8f68b21f2 e replicaria para 0 nós
+2026/06/13 22:33:18 [DRONE] Drone drone5 alocado para missão 37f075e3-465f-481e-9df5-55249bbd0757 (rota: Rota Leste)
+22:33:18 | 200 |     315.891µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:33:18 [BROKER] ✅ Drone drone5 notificado para missão 37f075e3-465f-481e-9df5-55249bbd0757
+2026/06/13 22:33:29 [LAUDO] Recebido laudo para missão: 55f2c833-470c-47e0-b401-6ea971c7b1a1
+2026/06/13 22:33:29 [LAUDO] Drone: drone8, Resultado: sucesso
+2026/06/13 22:33:29 [RAFT] Líder broker1 aplicou transação 55d85172-0393-4df5-bd23-84b7a41a1dc1 e replicaria para 0 nós
+2026/06/13 22:33:29 [DRONE] Drone drone8 liberado e disponível novamente
+2026/06/13 22:33:29 [DRONE] Drone drone8 liberado após missão 55f2c833-470c-47e0-b401-6ea971c7b1a1
+2026/06/13 22:33:29 ========== LAUDO COMPLETO ==========
+2026/06/13 22:33:29 ID Requisição: 55f2c833-470c-47e0-b401-6ea971c7b1a1
+2026/06/13 22:33:29 Drone: drone8
+2026/06/13 22:33:29 Rota: Rota Sul
+2026/06/13 22:33:29 Resultado: sucesso
+2026/06/13 22:33:29 Obstáculos: nenhum
+2026/06/13 22:33:29 Incidentes: [Comunicação com broker instável]
+2026/06/13 22:33:29 Início: 1781400796 | Fim: 1781400809
+2026/06/13 22:33:29 Hash: hash_223329_55f2c833
+2026/06/13 22:33:29 Hash Anterior: 
+2026/06/13 22:33:29 Total de tokens (créditos) da companhia COMP-B: 90
+2026/06/13 22:33:29 ====================================
+22:33:28 | 200 |     665.242µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:33:30 [LAUDO] Recebido laudo para missão: 37f075e3-465f-481e-9df5-55249bbd0757
+2026/06/13 22:33:30 [LAUDO] Drone: drone5, Resultado: sucesso
+2026/06/13 22:33:30 [RAFT] Líder broker1 aplicou transação 5a31ab0a-e6d3-4a04-b07b-3375c1b3c59a e replicaria para 0 nós
+2026/06/13 22:33:30 [DRONE] Drone drone5 liberado e disponível novamente
+2026/06/13 22:33:30 [DRONE] Drone drone5 liberado após missão 37f075e3-465f-481e-9df5-55249bbd0757
+2026/06/13 22:33:30 ========== LAUDO COMPLETO ==========
+2026/06/13 22:33:30 ID Requisição: 37f075e3-465f-481e-9df5-55249bbd0757
+2026/06/13 22:33:30 Drone: drone5
+2026/06/13 22:33:30 Rota: Rota Leste
+2026/06/13 22:33:30 Resultado: sucesso
+2026/06/13 22:33:30 Obstáculos: nenhum
+2026/06/13 22:33:30 Incidentes: nenhum
+2026/06/13 22:33:30 Início: 1781400800 | Fim: 1781400810
+2026/06/13 22:33:30 Hash: hash_223330_37f075e3
+2026/06/13 22:33:30 Hash Anterior: 
+2026/06/13 22:33:30 Total de tokens (créditos) da companhia COMP-A: 150
+2026/06/13 22:33:30 ====================================
+22:33:29 | 200 |      664.05µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:33:45 [RAFT] Líder broker1 aplicou transação 3b632b59-b2f7-4f5c-a7b1-41acba3b5448 e replicaria para 0 nós
+2026/06/13 22:33:45 [DRONE] Drone drone7 alocado para missão e7bf3aad-031f-4395-a8d1-36e4c49d9471 (rota: Rota Oeste)
+22:33:44 | 200 |     310.575µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:33:45 [BROKER] ✅ Drone drone7 notificado para missão e7bf3aad-031f-4395-a8d1-36e4c49d9471
+2026/06/13 22:33:46 [RAFT] Líder broker1 aplicou transação 35976de7-7e68-4eb2-ac90-999c2c72d303 e replicaria para 0 nós
+2026/06/13 22:33:46 [DRONE] Drone drone4 alocado para missão b31ffa0e-a7c6-4c34-b88d-7f91a43bb2dd (rota: Rota Sul)
+22:33:45 | 200 |     295.724µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:33:46 [BROKER] ✅ Drone drone4 notificado para missão b31ffa0e-a7c6-4c34-b88d-7f91a43bb2dd
+2026/06/13 22:33:53 [LAUDO] Recebido laudo para missão: e7bf3aad-031f-4395-a8d1-36e4c49d9471
+2026/06/13 22:33:53 [LAUDO] Drone: drone7, Resultado: falha
+2026/06/13 22:33:53 [RAFT] Líder broker1 aplicou transação 0a5fb6c3-5eef-4d70-a152-6ce2ba88e4b4 e replicaria para 0 nós
+2026/06/13 22:33:53 [DRONE] Drone drone7 liberado e disponível novamente
+2026/06/13 22:33:53 [DRONE] Drone drone7 liberado após missão e7bf3aad-031f-4395-a8d1-36e4c49d9471
+2026/06/13 22:33:53 ========== LAUDO COMPLETO ==========
+2026/06/13 22:33:53 ID Requisição: e7bf3aad-031f-4395-a8d1-36e4c49d9471
+2026/06/13 22:33:53 Drone: drone7
+2026/06/13 22:33:53 Rota: Rota Oeste
+2026/06/13 22:33:53 Resultado: falha
+2026/06/13 22:33:53 Obstáculos: [Congestionamento detectado na rota]
+2026/06/13 22:33:53 Incidentes: [Missão não completada devido a falha técnica]
+2026/06/13 22:33:53 Início: 1781400820 | Fim: 1781400833
+2026/06/13 22:33:53 Hash: hash_223353_e7bf3aad
+2026/06/13 22:33:53 Hash Anterior: 
+2026/06/13 22:33:53 Total de tokens (créditos) da companhia COMP-A: 140
+2026/06/13 22:33:53 ====================================
+22:33:52 | 200 |     717.585µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:33:56 [RAFT] Líder broker1 aplicou transação 595e9216-2756-4e9d-ba40-153b8aeb9cfd e replicaria para 0 nós
+2026/06/13 22:33:56 [DRONE] Drone drone5 alocado para missão 900f80a7-ef74-4c62-aa79-b99924eec5f9 (rota: Rota Central)
+22:33:55 | 200 |     203.322µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:33:56 [BROKER] ✅ Drone drone5 notificado para missão 900f80a7-ef74-4c62-aa79-b99924eec5f9
+2026/06/13 22:33:57 [LAUDO] Recebido laudo para missão: b31ffa0e-a7c6-4c34-b88d-7f91a43bb2dd
+2026/06/13 22:33:57 [LAUDO] Drone: drone4, Resultado: sucesso
+2026/06/13 22:33:57 [RAFT] Líder broker1 aplicou transação 30510067-eec5-476e-abb5-91a85c156a0e e replicaria para 0 nós
+2026/06/13 22:33:57 [DRONE] Drone drone4 liberado e disponível novamente
+2026/06/13 22:33:57 [DRONE] Drone drone4 liberado após missão b31ffa0e-a7c6-4c34-b88d-7f91a43bb2dd
+2026/06/13 22:33:57 ========== LAUDO COMPLETO ==========
+2026/06/13 22:33:57 ID Requisição: b31ffa0e-a7c6-4c34-b88d-7f91a43bb2dd
+2026/06/13 22:33:57 Drone: drone4
+2026/06/13 22:33:57 Rota: Rota Sul
+2026/06/13 22:33:57 Resultado: sucesso
+2026/06/13 22:33:57 Obstáculos: nenhum
+2026/06/13 22:33:57 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:33:57 Início: 1781400825 | Fim: 1781400837
+2026/06/13 22:33:57 Hash: hash_223357_b31ffa0e
+2026/06/13 22:33:57 Hash Anterior: 
+2026/06/13 22:33:57 Total de tokens (créditos) da companhia COMP-B: 80
+2026/06/13 22:33:57 ====================================
+22:33:56 | 200 |     395.918µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:34:08 [LAUDO] Recebido laudo para missão: 900f80a7-ef74-4c62-aa79-b99924eec5f9
+2026/06/13 22:34:08 [LAUDO] Drone: drone5, Resultado: sucesso
+2026/06/13 22:34:08 [RAFT] Líder broker1 aplicou transação 98b6a590-02d1-496d-85c6-5b7486e3affb e replicaria para 0 nós
+2026/06/13 22:34:08 [DRONE] Drone drone5 liberado e disponível novamente
+2026/06/13 22:34:08 [DRONE] Drone drone5 liberado após missão 900f80a7-ef74-4c62-aa79-b99924eec5f9
+2026/06/13 22:34:08 ========== LAUDO COMPLETO ==========
+2026/06/13 22:34:08 ID Requisição: 900f80a7-ef74-4c62-aa79-b99924eec5f9
+2026/06/13 22:34:08 Drone: drone5
+2026/06/13 22:34:08 Rota: Rota Central
+2026/06/13 22:34:08 Resultado: sucesso
+2026/06/13 22:34:08 Obstáculos: [Congestionamento detectado na rota Objeto flutuante na posição 23°S]
+2026/06/13 22:34:08 Incidentes: nenhum
+2026/06/13 22:34:08 Início: 1781400835 | Fim: 1781400848
+2026/06/13 22:34:08 Hash: hash_223408_900f80a7
+2026/06/13 22:34:08 Hash Anterior: 
+2026/06/13 22:34:08 Total de tokens (créditos) da companhia COMP-A: 130
+2026/06/13 22:34:08 ====================================
+22:34:07 | 200 |    4.086695ms | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:34:12 [RAFT] Líder broker1 aplicou transação 2edf3c1e-c220-4447-b7c1-679eb51fbf0b e replicaria para 0 nós
+2026/06/13 22:34:12 [DRONE] Drone drone4 alocado para missão 60ff4086-422d-4a91-be61-5df299388570 (rota: Rota Leste)
+22:34:11 | 200 |     309.657µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:34:12 [BROKER] ✅ Drone drone4 notificado para missão 60ff4086-422d-4a91-be61-5df299388570
+2026/06/13 22:34:13 [RAFT] Líder broker1 aplicou transação 24e83147-9bd6-4e15-9194-ecd3c9dc29a8 e replicaria para 0 nós
+2026/06/13 22:34:13 [DRONE] Drone drone2 alocado para missão 8bf0b071-b7ee-4d53-b105-2671aef9e89a (rota: Rota Leste)
+22:34:13 | 200 |     292.974µs | 127.0.0.1 | POST | /requisitar-drone | -
+2026/06/13 22:34:13 [BROKER] ✅ Drone drone2 notificado para missão 8bf0b071-b7ee-4d53-b105-2671aef9e89a
+2026/06/13 22:34:20 [LAUDO] Recebido laudo para missão: 8bf0b071-b7ee-4d53-b105-2671aef9e89a
+2026/06/13 22:34:20 [LAUDO] Drone: drone2, Resultado: sucesso
+2026/06/13 22:34:20 [RAFT] Líder broker1 aplicou transação 81bfb85a-64c2-4d95-a897-4e9796121929 e replicaria para 0 nós
+2026/06/13 22:34:20 [DRONE] Drone drone2 liberado e disponível novamente
+2026/06/13 22:34:20 [DRONE] Drone drone2 liberado após missão 8bf0b071-b7ee-4d53-b105-2671aef9e89a
+2026/06/13 22:34:20 ========== LAUDO COMPLETO ==========
+2026/06/13 22:34:20 ID Requisição: 8bf0b071-b7ee-4d53-b105-2671aef9e89a
+2026/06/13 22:34:20 Drone: drone2
+2026/06/13 22:34:20 Rota: Rota Leste
+2026/06/13 22:34:20 Resultado: sucesso
+2026/06/13 22:34:20 Obstáculos: [Congestionamento detectado na rota]
+2026/06/13 22:34:20 Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:34:20 Início: 1781400850 | Fim: 1781400860
+2026/06/13 22:34:20 Hash: hash_223420_8bf0b071
+2026/06/13 22:34:20 Hash Anterior: 
+2026/06/13 22:34:20 Total de tokens (créditos) da companhia COMP-B: 70
+2026/06/13 22:34:20 ====================================
+22:34:20 | 200 |     684.767µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:34:22 [LAUDO] Recebido laudo para missão: 60ff4086-422d-4a91-be61-5df299388570
+2026/06/13 22:34:22 [LAUDO] Drone: drone4, Resultado: sucesso
+2026/06/13 22:34:22 [RAFT] Líder broker1 aplicou transação 8a79d492-32d1-4934-9317-b9ebfd4ec4bb e replicaria para 0 nós
+2026/06/13 22:34:22 [DRONE] Drone drone4 liberado e disponível novamente
+2026/06/13 22:34:22 [DRONE] Drone drone4 liberado após missão 60ff4086-422d-4a91-be61-5df299388570
+2026/06/13 22:34:22 ========== LAUDO COMPLETO ==========
+2026/06/13 22:34:22 ID Requisição: 60ff4086-422d-4a91-be61-5df299388570
+2026/06/13 22:34:22 Drone: drone4
+2026/06/13 22:34:22 Rota: Rota Leste
+2026/06/13 22:34:22 Resultado: sucesso
+2026/06/13 22:34:22 Obstáculos: [Congestionamento detectado na rota Objeto flutuante na posição 23°S]
+2026/06/13 22:34:22 Incidentes: nenhum
+2026/06/13 22:34:22 Início: 1781400856 | Fim: 1781400862
+2026/06/13 22:34:22 Hash: hash_223422_60ff4086
+2026/06/13 22:34:22 Hash Anterior: 
+2026/06/13 22:34:22 Total de tokens (créditos) da companhia COMP-A: 120
+2026/06/13 22:34:22 ====================================
+22:34:21 | 200 |     715.385µs | 127.0.0.1 | POST | /drone/relatar-missao | -
+2026/06/13 22:34:35 [RAFT] Líder broker1 aplicou transação 64c53d8c-e542-4999-9246-8b0cf1869c13 e replicaria para 0 nós
+2026/06/13 22:34:35 [DRONE] Drone drone7 alocado para missão f404da36-3ff5-4bb4-afb3-31dd5f4abd46 (rota: Rota Norte)
+22:34:34 | 200 |     284.449µs | 127.0.0.1 | POST | /requisitar-drone | -
+22:34:34 | 200 |      20.167µs | 127.0.0.1 | GET | /saldo/COMP-B | -
+2026/06/13 22:34:35 [BROKER] ✅ Drone drone7 notificado para missão f404da36-3ff5-4bb4-afb3-31dd5f4abd46

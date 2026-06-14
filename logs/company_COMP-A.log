@@ -1,0 +1,44 @@
+2026/06/13 22:27:39 [COMPANY COMP-A] Iniciando simulador autônomo...
+2026/06/13 22:28:05 [COMPANY COMP-A] Solicitando drone para Rota Oeste
+2026/06/13 22:28:05 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:28:23 [COMPANY COMP-A] Solicitando drone para Rota Oeste
+2026/06/13 22:28:23 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:28:35 [COMPANY COMP-A] Solicitando drone para Rota Norte
+2026/06/13 22:28:35 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:28:54 [COMPANY COMP-A] Solicitando drone para Rota Sul
+2026/06/13 22:28:54 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:28:54 [COMPANY COMP-A] Saldo atual: 60 créditos
+2026/06/13 22:29:18 [COMPANY COMP-A] Solicitando drone para Rota Sul
+2026/06/13 22:29:18 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:29:18 [COMPANY COMP-A] Saldo atual: 50 créditos
+2026/06/13 22:29:47 [COMPANY COMP-A] Solicitando drone para Rota Norte
+2026/06/13 22:29:47 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:30:17 [COMPANY COMP-A] Solicitando drone para Rota Norte
+2026/06/13 22:30:17 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:30:17 [COMPANY COMP-A] Saldo atual: 30 créditos
+2026/06/13 22:30:17 [COMPANY COMP-A] Saldo baixo! Recarregando 200 créditos...
+2026/06/13 22:30:17 [COMPANY COMP-A] ✅ Recarga de 200 créditos realizada! Novo saldo: 230
+2026/06/13 22:30:38 [COMPANY COMP-A] Solicitando drone para Rota Central
+2026/06/13 22:30:38 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:31:03 [COMPANY COMP-A] Solicitando drone para Rota Central
+2026/06/13 22:31:03 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:31:03 [COMPANY COMP-A] Saldo atual: 210 créditos
+2026/06/13 22:31:22 [COMPANY COMP-A] Solicitando drone para Rota Leste
+2026/06/13 22:31:22 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:31:52 [COMPANY COMP-A] Solicitando drone para Rota Norte
+2026/06/13 22:31:52 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:32:23 [COMPANY COMP-A] Solicitando drone para Rota Leste
+2026/06/13 22:32:23 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:32:23 [COMPANY COMP-A] Saldo atual: 180 créditos
+2026/06/13 22:32:55 [COMPANY COMP-A] Solicitando drone para Rota Norte
+2026/06/13 22:32:55 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:33:05 [COMPANY COMP-A] Solicitando drone para Rota Sul
+2026/06/13 22:33:05 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:33:18 [COMPANY COMP-A] Solicitando drone para Rota Leste
+2026/06/13 22:33:18 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:33:45 [COMPANY COMP-A] Solicitando drone para Rota Oeste
+2026/06/13 22:33:45 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:33:56 [COMPANY COMP-A] Solicitando drone para Rota Central
+2026/06/13 22:33:56 [COMPANY COMP-A] Resposta: HTTP 200: aprovada
+2026/06/13 22:34:12 [COMPANY COMP-A] Solicitando drone para Rota Leste
+2026/06/13 22:34:12 [COMPANY COMP-A] Resposta: HTTP 200: aprovada

@@ -1,0 +1,15 @@
+2026/06/13 22:27:34 [INICIO] Iniciando broker broker3 na porta 8082
+2026/06/13 22:27:34 [RAFT] Nó broker3 agora é SEGUIDOR do líder broker1
+2026/06/13 22:27:34 [SUCESSO] Broker broker3 rodando em http://localhost:8082
+
+ ┌───────────────────────────────────────────────────┐ 
+ │                   W-PBL3 Broker                   │ 
+ │                  Fiber v2.52.13                   │ 
+ │               http://127.0.0.1:8082               │ 
+ │       (bound on host 0.0.0.0 and port 8082)       │ 
+ │                                                   │ 
+ │ Handlers ............ 22  Processes ........... 1 │ 
+ │ Prefork ....... Disabled  PID .............. 4776 │ 
+ └───────────────────────────────────────────────────┘ 
+
+22:27:34 | 200 |     185.446µs | 127.0.0.1 | GET | /health | -

@@ -1,0 +1,29 @@
+2026/06/13 22:27:38 [DRONE drone8] Iniciando simulador autônomo...
+2026/06/13 22:27:38 [DRONE drone8] ✅ Registrado com sucesso no broker http://localhost:8080
+2026/06/13 22:27:38 [DRONE drone8] 🌐 Servidor HTTP iniciado na porta 9008
+2026/06/13 22:28:05 [DRONE drone8] 🚀 Missão REAL recebida do broker: 0149feed-87f7-4c58-9ba1-2a40e28d6d88 (Rota: Rota Oeste)
+2026/06/13 22:28:05 [DRONE drone8] ✈️ Executando missão REAL 0149feed-87f7-4c58-9ba1-2a40e28d6d88 na rota Rota Oeste...
+2026/06/13 22:28:19 [DRONE drone8] 📤 Enviando laudo para missão 0149feed-87f7-4c58-9ba1-2a40e28d6d88...
+2026/06/13 22:28:19 [DRONE drone8] ✅ Laudo enviado com sucesso para missão 0149feed-87f7-4c58-9ba1-2a40e28d6d88
+2026/06/13 22:28:19 [DRONE drone8] 📋 Resultado: sucesso
+2026/06/13 22:28:19 [DRONE drone8] 📋 Obstáculos: [Objeto flutuante na posição 23°S Navio cargueiro parado na rota]
+2026/06/13 22:28:19 [DRONE drone8] ⚠️ Incidentes: [Perda de sinal por 3 segundos Bateria em nível crítico (15%)]
+2026/06/13 22:29:54 [DRONE drone8] 🚀 Missão REAL recebida do broker: f562cb57-dd4a-463e-a047-6172de445475 (Rota: Rota Oeste)
+2026/06/13 22:29:54 [DRONE drone8] ✈️ Executando missão REAL f562cb57-dd4a-463e-a047-6172de445475 na rota Rota Oeste...
+2026/06/13 22:30:08 [DRONE drone8] 📤 Enviando laudo para missão f562cb57-dd4a-463e-a047-6172de445475...
+2026/06/13 22:30:08 [DRONE drone8] ✅ Laudo enviado com sucesso para missão f562cb57-dd4a-463e-a047-6172de445475
+2026/06/13 22:30:08 [DRONE drone8] 📋 Resultado: sucesso
+2026/06/13 22:30:08 [DRONE drone8] 📋 Obstáculos: [Congestionamento detectado na rota Objeto flutuante na posição 23°S]
+2026/06/13 22:30:08 [DRONE drone8] ⚠️ Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:30:17 [DRONE drone8] 🚀 Missão REAL recebida do broker: f87c992d-f86b-4f6f-8d9b-575dba9194dc (Rota: Rota Norte)
+2026/06/13 22:30:17 [DRONE drone8] ✈️ Executando missão REAL f87c992d-f86b-4f6f-8d9b-575dba9194dc na rota Rota Norte...
+2026/06/13 22:30:25 [DRONE drone8] 📤 Enviando laudo para missão f87c992d-f86b-4f6f-8d9b-575dba9194dc...
+2026/06/13 22:30:25 [DRONE drone8] ✅ Laudo enviado com sucesso para missão f87c992d-f86b-4f6f-8d9b-575dba9194dc
+2026/06/13 22:30:25 [DRONE drone8] 📋 Resultado: sucesso
+2026/06/13 22:30:25 [DRONE drone8] ⚠️ Incidentes: [Perda de sinal por 3 segundos]
+2026/06/13 22:33:18 [DRONE drone8] 🚀 Missão REAL recebida do broker: 55f2c833-470c-47e0-b401-6ea971c7b1a1 (Rota: Rota Sul)
+2026/06/13 22:33:18 [DRONE drone8] ✈️ Executando missão REAL 55f2c833-470c-47e0-b401-6ea971c7b1a1 na rota Rota Sul...
+2026/06/13 22:33:29 [DRONE drone8] 📤 Enviando laudo para missão 55f2c833-470c-47e0-b401-6ea971c7b1a1...
+2026/06/13 22:33:29 [DRONE drone8] ✅ Laudo enviado com sucesso para missão 55f2c833-470c-47e0-b401-6ea971c7b1a1
+2026/06/13 22:33:29 [DRONE drone8] 📋 Resultado: sucesso
+2026/06/13 22:33:29 [DRONE drone8] ⚠️ Incidentes: [Comunicação com broker instável]

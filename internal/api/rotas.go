@@ -172,11 +172,10 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"erro": "Laudo inválido: " + err.Error()})
 	}
 
-	// Logs SEGUROS (sem slice bounds)
 	log.Printf("[LAUDO] Recebido laudo para missão: %s", laudo.IDRequisicao)
 	log.Printf("[LAUDO] Drone: %s, Resultado: %s", laudo.DroneID, laudo.Resultado)
 
-	// VERIFICAÇÃO DE HASH DESABILITADA
+	// Verificação de hash desabilitada (conforme combinado)
 	/*
 	   if !laudo.VerificarIntegridade() {
 	       log.Printf("[ALERTA] Laudo com hash inválido detectado!")
@@ -192,6 +191,27 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 			"erro":  "Este não é o nó líder",
 			"lider": s.raftNode.ObterLiderID(),
 		})
+	}
+
+	// --- Buscar a companhia associada a esta requisição ---
+	var companhiaID string
+	historico := s.estado.ObterHistorico()
+	for _, tx := range historico {
+		if tx.Tipo == consenso.TipoPagamento {
+			var dadosPagamento consenso.DadosPagamento
+			if err := json.Unmarshal(tx.Dados, &dadosPagamento); err == nil {
+				if dadosPagamento.IDRequisicao == laudo.IDRequisicao {
+					companhiaID = dadosPagamento.DeCompanhiaID
+					break
+				}
+			}
+		}
+	}
+
+	// Se não encontrou, usa um fallback (apenas para não quebrar)
+	if companhiaID == "" {
+		companhiaID = "desconhecida"
+		log.Printf("[LAUDO] ⚠️ Não foi possível identificar a companhia para a missão %s", laudo.IDRequisicao)
 	}
 
 	// Registra o laudo como transação no ledger
@@ -221,10 +241,35 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 	s.droneManager.LiberarDrone(laudo.DroneID)
 	log.Printf("[DRONE] Drone %s liberado após missão %s", laudo.DroneID, laudo.IDRequisicao)
 
+	// --- Exibir conteúdo detalhado do laudo e total de tokens (créditos) da companhia ---
+	saldo := s.estado.ObterSaldo(companhiaID)
+
+	log.Printf("========== LAUDO COMPLETO ==========")
+	log.Printf("ID Requisição: %s", laudo.IDRequisicao)
+	log.Printf("Drone: %s", laudo.DroneID)
+	log.Printf("Rota: %s", laudo.Rota)
+	log.Printf("Resultado: %s", laudo.Resultado)
+	if len(laudo.Obstaculos) > 0 {
+		log.Printf("Obstáculos: %v", laudo.Obstaculos)
+	} else {
+		log.Printf("Obstáculos: nenhum")
+	}
+	if len(laudo.Incidentes) > 0 {
+		log.Printf("Incidentes: %v", laudo.Incidentes)
+	} else {
+		log.Printf("Incidentes: nenhum")
+	}
+	log.Printf("Início: %d | Fim: %d", laudo.DataHoraInicio, laudo.DataHoraFim)
+	log.Printf("Hash: %s", laudo.HashVerificacao)
+	log.Printf("Hash Anterior: %s", laudo.HashAnterior)
+	log.Printf("Total de tokens (créditos) da companhia %s: %d", companhiaID, saldo)
+	log.Printf("====================================")
+
 	return c.JSON(fiber.Map{
-		"status":         "laudo registrado com sucesso",
-		"id_requisicao":  laudo.IDRequisicao,
-		"drone_liberado": true,
+		"status":          "laudo registrado com sucesso",
+		"id_requisicao":   laudo.IDRequisicao,
+		"drone_liberado":  true,
+		"saldo_companhia": saldo,
 	})
 }
 
