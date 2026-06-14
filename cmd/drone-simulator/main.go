@@ -104,6 +104,7 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 		}
 		resp, err := client.Do(req)
 		if err != nil {
+			log.Printf("[DRONE %s] Erro de conexão com %s, tentando descobrir novo líder...", droneID, url)
 			leader, err2 := descobreLider()
 			if err2 != nil {
 				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
@@ -111,7 +112,6 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 			url = "http://" + leader + strings.TrimPrefix(url, "/")
 			continue
 		}
-		// Se for redirect, fecha esta resposta e tenta nova URL
 		if resp.StatusCode == http.StatusTemporaryRedirect {
 			loc := resp.Header.Get("Location")
 			resp.Body.Close()
@@ -121,10 +121,9 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 			url = loc
 			continue
 		}
-		// Para qualquer outro status, retorna a resposta com corpo aberto
 		return resp, nil
 	}
-	return nil, fmt.Errorf("excedido tentativas")
+	return nil, fmt.Errorf("excedido número de tentativas")
 }
 
 func registrarNoBroker() {

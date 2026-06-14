@@ -95,12 +95,11 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 		req.Header.Set("Content-Type", "application/json")
 		client := &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse // não segue automático, tratamos manualmente
+				return http.ErrUseLastResponse
 			},
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			// Se erro de conexão, tenta descobrir novo líder
 			log.Printf("[COMPANY %s] Erro de conexão com %s, tentando descobrir novo líder...", companyID, url)
 			leader, err2 := descobreLider()
 			if err2 != nil {
@@ -109,16 +108,17 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 			url = "http://" + leader + strings.TrimPrefix(url, "/")
 			continue
 		}
-		defer resp.Body.Close()
+		// Trata redirecionamento (fecha o corpo desta resposta)
 		if resp.StatusCode == http.StatusTemporaryRedirect {
 			loc := resp.Header.Get("Location")
+			resp.Body.Close()
 			if loc == "" {
 				return nil, fmt.Errorf("redirect sem location")
 			}
-			log.Printf("[COMPANY %s] Redirecionando para %s", companyID, loc)
 			url = loc
 			continue
 		}
+		// Para outros status, retorna a resposta com corpo ABERTO
 		return resp, nil
 	}
 	return nil, fmt.Errorf("excedido número de tentativas")
