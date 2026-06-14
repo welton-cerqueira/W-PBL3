@@ -13,12 +13,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Estrutura para armazenar informações do drone
-type DroneInfo struct {
-	ID    string
-	Porta string
-}
-
 // healthCheck verifica se o broker está vivo
 func (s *ServidorAPI) healthCheck(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
@@ -126,7 +120,6 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		"creditos_debitados": 10,
 		"saldo_restante":     s.estado.ObterSaldo(req.CompanhiaID),
 	})
-
 }
 
 // recarregarCreditos adiciona créditos a uma companhia (apenas para testes)
@@ -273,10 +266,13 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 	})
 }
 
+// registrarDrone registra um drone no sistema
+// NOTA: Em ambiente distribuído, o drone deve enviar seu endereço completo (ex: "192.168.1.20:9001")
+// no campo "addr". Atualmente o campo "porta" é usado, mas deve ser substituído por "addr".
 func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 	var req struct {
 		DroneID string `json:"drone_id"`
-		Porta   string `json:"porta"`
+		Addr    string `json:"addr"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -284,22 +280,23 @@ func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 	}
 
 	// Armazenar informações do drone
-	s.droneManager.RegistrarDrone(req.DroneID, req.Porta)
+	s.droneManager.RegistrarDrone(req.DroneID, req.Addr)
 
-	// Armazenar porta para notificação
+	// Armazenar porta/endereço para notificação
 	if s.drones == nil {
 		s.drones = make(map[string]string)
 	}
-	s.drones[req.DroneID] = req.Porta
+	s.drones[req.DroneID] = req.Addr
 
-	log.Printf("[DRONE] Drone %s registrado na porta %s", req.DroneID, req.Porta)
+	log.Printf("[DRONE] Drone %s registrado na porta %s", req.DroneID, req.Addr)
 	return c.JSON(fiber.Map{"status": "drone registrado", "drone_id": req.DroneID})
 }
 
-// Função para notificar drone via HTTP
+// notificarDrone via HTTP
+// ATENÇÃO: Esta função ainda assume que o drone está em "localhost". Para funcionar em rede,
+// o drone deve fornecer seu endereço IP completo no registro, e este endereço deve ser usado aqui.
 func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota string) {
-	// Obter porta do drone
-	porta, existe := s.drones[droneID]
+	endereco, existe := s.drones[droneID]
 	if !existe {
 		log.Printf("[BROKER] ❌ Drone %s não encontrado no registro", droneID)
 		return
@@ -314,7 +311,8 @@ func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota string) {
 	jsonData, _ := json.Marshal(payload)
 
 	// Fazer requisição HTTP para o drone
-	url := fmt.Sprintf("http://localhost:%s/iniciar-missao", porta)
+	// TODO: usar o endereço completo (se for "192.168.1.20:9001", já funciona; se for só porta, assume localhost)
+	url := fmt.Sprintf("http://%s/iniciar-missao", endereco)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Printf("[BROKER] ❌ Erro ao notificar drone %s: %v", droneID, err)
@@ -388,6 +386,16 @@ func (s *ServidorAPI) receberComandoRaft(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"status": "ok"})
+}
+
+// getLeader retorna o ID e o endereço da API do líder atual
+func (s *ServidorAPI) getLeader(c *fiber.Ctx) error {
+	liderID := s.raftNode.ObterLiderID()
+	liderAddr := s.raftNode.ObterLiderApiAddr() // método correto
+	return c.JSON(fiber.Map{
+		"leader_id":   liderID,
+		"leader_addr": liderAddr,
+	})
 }
 
 // obterEstatisticasLaudos retorna estatísticas dos laudos

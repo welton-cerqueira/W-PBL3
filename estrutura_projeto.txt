@@ -1,5 +1,5 @@
 Gerando documentação do projeto...
-Gerado em: Sun Jun 14 00:13:49 -03 2026
+Gerado em: Sun Jun 14 01:13:48 -03 2026
 =========================================
 
 ### ARQUITETURA DO PROJETO ###
@@ -207,12 +207,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Estrutura para armazenar informações do drone
-type DroneInfo struct {
-	ID    string
-	Porta string
-}
-
 // healthCheck verifica se o broker está vivo
 func (s *ServidorAPI) healthCheck(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
@@ -320,7 +314,6 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		"creditos_debitados": 10,
 		"saldo_restante":     s.estado.ObterSaldo(req.CompanhiaID),
 	})
-
 }
 
 // recarregarCreditos adiciona créditos a uma companhia (apenas para testes)
@@ -467,10 +460,13 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 	})
 }
 
+// registrarDrone registra um drone no sistema
+// NOTA: Em ambiente distribuído, o drone deve enviar seu endereço completo (ex: "192.168.1.20:9001")
+// no campo "addr". Atualmente o campo "porta" é usado, mas deve ser substituído por "addr".
 func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 	var req struct {
 		DroneID string `json:"drone_id"`
-		Porta   string `json:"porta"`
+		Porta   string `json:"porta"` // TODO: mudar para "addr" (endereço completo)
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -480,7 +476,7 @@ func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 	// Armazenar informações do drone
 	s.droneManager.RegistrarDrone(req.DroneID, req.Porta)
 
-	// Armazenar porta para notificação
+	// Armazenar porta/endereço para notificação
 	if s.drones == nil {
 		s.drones = make(map[string]string)
 	}
@@ -490,10 +486,12 @@ func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"status": "drone registrado", "drone_id": req.DroneID})
 }
 
-// Função para notificar drone via HTTP
+// notificarDrone via HTTP
+// ATENÇÃO: Esta função ainda assume que o drone está em "localhost". Para funcionar em rede,
+// o drone deve fornecer seu endereço IP completo no registro, e este endereço deve ser usado aqui.
 func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota string) {
-	// Obter porta do drone
-	porta, existe := s.drones[droneID]
+	// Obter porta/endereço do drone
+	endereco, existe := s.drones[droneID]
 	if !existe {
 		log.Printf("[BROKER] ❌ Drone %s não encontrado no registro", droneID)
 		return
@@ -508,7 +506,8 @@ func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota string) {
 	jsonData, _ := json.Marshal(payload)
 
 	// Fazer requisição HTTP para o drone
-	url := fmt.Sprintf("http://localhost:%s/iniciar-missao", porta)
+	// TODO: usar o endereço completo (se for "192.168.1.20:9001", já funciona; se for só porta, assume localhost)
+	url := fmt.Sprintf("http://%s/iniciar-missao", endereco)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Printf("[BROKER] ❌ Erro ao notificar drone %s: %v", droneID, err)
@@ -584,6 +583,16 @@ func (s *ServidorAPI) receberComandoRaft(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"status": "ok"})
 }
 
+// getLeader retorna o ID e o endereço da API do líder atual
+func (s *ServidorAPI) getLeader(c *fiber.Ctx) error {
+	liderID := s.raftNode.ObterLiderID()
+	liderAddr := s.raftNode.ObterLiderApiAddr() // método correto
+	return c.JSON(fiber.Map{
+		"leader_id":   liderID,
+		"leader_addr": liderAddr,
+	})
+}
+
 // obterEstatisticasLaudos retorna estatísticas dos laudos
 func (s *ServidorAPI) obterEstatisticasLaudos(c *fiber.Ctx) error {
 	estatisticas := s.estado.ObterEstatisticasLaudos()
@@ -609,7 +618,7 @@ type ServidorAPI struct {
 	app          *fiber.App
 	porta        string
 	estado       *consenso.EstadoLedger
-	raftNode     *consenso.TCPRaft // ANTES era *consenso.NoRaft
+	raftNode     *consenso.TCPRaft
 	droneManager *drone.GerenciadorDrones
 	drones       map[string]string
 }
@@ -645,6 +654,7 @@ func (s *ServidorAPI) RegistrarRotas() {
 	s.app.Get("/saldo/:companhia_id", s.consultarSaldo)
 	s.app.Get("/historico", s.consultarHistorico)
 	s.app.Get("/missoes", s.listarMissoes)
+	s.app.Get("/leader", s.getLeader) // NOVA ROTA: retorna o líder atual
 
 	// Rotas para companhias
 	s.app.Post("/requisitar-drone", s.requisitarDrone)
@@ -653,14 +663,14 @@ func (s *ServidorAPI) RegistrarRotas() {
 	// Rotas para drones
 	s.app.Post("/drone/registrar", s.registrarDrone)
 	s.app.Post("/drone/relatar-missao", s.relatarMissao)
-	s.app.Post("/drone/liberar", s.liberarDrone) // ADICIONAR ESTA LINHA
+	s.app.Post("/drone/liberar", s.liberarDrone)
 
 	// Rotas internas entre brokers
 	s.app.Post("/raft/comando", s.receberComandoRaft)
 
 	// Rotas de auditoria
-	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos) // ADICIONAR ESTA LINHA
-	s.app.Get("/estatisticas", s.obterEstatisticasLaudos)   // ADICIONAR ESTA LINHA
+	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos)
+	s.app.Get("/estatisticas", s.obterEstatisticasLaudos)
 	s.app.Get("/drone/status", s.statusDrone)
 }
 
@@ -989,56 +999,58 @@ import (
 )
 
 type TCPRaft struct {
-	mu          sync.RWMutex
-	id          string
-	addr        string            // endereço TCP (ex: "127.0.0.1:7000")
-	peers       map[string]string // id -> endereço
-	isLeader    bool
-	leaderId    string
-	leaderAddr  string
-	state       *EstadoLedger
-	heartbeatCh chan bool
-	stopCh      chan struct{}
+	mu             sync.RWMutex
+	id             string
+	addr           string            // endereço TCP Raft (ex: "192.168.1.10:7000")
+	apiAddr        string            // endereço HTTP da API (ex: "192.168.1.10:8080")
+	peers          map[string]string // id -> endereço Raft
+	isLeader       bool
+	leaderId       string
+	leaderRaftAddr string // endereço Raft do líder
+	leaderApiAddr  string // endereço API do líder
+	state          *EstadoLedger
+	heartbeatCh    chan bool
+	stopCh         chan struct{}
 }
 
 type RaftConfigTCP struct {
 	NodeID    string
 	RaftAddr  string
-	Peers     map[string]string // id -> endereço dos outros nós
-	Bootstrap bool              // se true, começa como líder
+	ApiAddr   string
+	Peers     map[string]string
+	Bootstrap bool
 }
 
 func NewTCPRaft(cfg RaftConfigTCP) (*TCPRaft, error) {
 	r := &TCPRaft{
 		id:          cfg.NodeID,
 		addr:        cfg.RaftAddr,
+		apiAddr:     cfg.ApiAddr,
 		peers:       cfg.Peers,
 		isLeader:    cfg.Bootstrap,
 		state:       NovoEstadoLedger(),
 		heartbeatCh: make(chan bool, 100),
 		stopCh:      make(chan struct{}),
 	}
-	if !cfg.Bootstrap {
+
+	if cfg.Bootstrap {
+		r.leaderId = cfg.NodeID
+		r.leaderRaftAddr = cfg.RaftAddr
+		r.leaderApiAddr = cfg.ApiAddr
+		go r.sendHeartbeats()
+	} else {
 		go func() {
-			time.Sleep(1 * time.Second) // Aguarda servidor TCP iniciar
+			time.Sleep(1 * time.Second)
 			r.tryJoin()
 			r.campaign()
 		}()
-	} else {
-		go r.sendHeartbeats()
 	}
-	// Inicia servidor TCP
+
 	go r.startTCPServer()
-	// Se não for bootstrap, inicia eleição (após alguns segundos)
-	if !cfg.Bootstrap {
-		go r.campaign()
-	} else {
-		go r.sendHeartbeats()
-	}
 	return r, nil
 }
 
-// tryJoin tenta se juntar ao cluster enviando um comando "join" para qualquer peer conhecido
+// tryJoin (mantém igual ao anterior, sem alterações)
 func (r *TCPRaft) tryJoin() {
 	for id, addr := range r.peers {
 		if id == r.id {
@@ -1049,9 +1061,8 @@ func (r *TCPRaft) tryJoin() {
 			log.Printf("[RAFT %s] Falha ao conectar para join em %s: %v", r.id, addr, err)
 			continue
 		}
-		msg := fmt.Sprintf(`{"type":"join","nodeId":"%s","nodeAddr":"%s"}`, r.id, r.addr)
+		msg := fmt.Sprintf(`{"type":"join","nodeId":"%s","nodeAddr":"%s","apiAddr":"%s"}`, r.id, r.addr, r.apiAddr)
 		fmt.Fprintf(conn, "%s\n", msg)
-		// Aguarda resposta "ok"
 		buf := make([]byte, 2)
 		n, _ := conn.Read(buf)
 		conn.Close()
@@ -1103,20 +1114,19 @@ func (r *TCPRaft) handleConnection(conn net.Conn) {
 			r.handleAppend(cmd)
 		case "join":
 			r.handleJoin(cmd, conn)
+		case "snapshot":
+			r.handleSnapshot(cmd)
 		}
 	}
 }
 
-// ------------------ Eleição ------------------
 func (r *TCPRaft) campaign() {
-	time.Sleep(2 * time.Second) // aguarda estabilização
+	time.Sleep(2 * time.Second)
 	for {
 		if r.isLeader {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		// Se não recebe heartbeat do líder há mais de 2 segundos
-		// Inicia eleição
 		r.mu.Lock()
 		lastLeader := r.leaderId
 		r.mu.Unlock()
@@ -1138,7 +1148,8 @@ func (r *TCPRaft) campaign() {
 			r.mu.Lock()
 			r.isLeader = true
 			r.leaderId = r.id
-			r.leaderAddr = r.addr
+			r.leaderRaftAddr = r.addr
+			r.leaderApiAddr = r.apiAddr
 			r.mu.Unlock()
 			log.Printf("[RAFT %s] tornou-se LÍDER", r.id)
 			go r.sendHeartbeats()
@@ -1174,16 +1185,13 @@ func (r *TCPRaft) requestVote(targetAddr string) bool {
 }
 
 func (r *TCPRaft) handleVote(cmd map[string]interface{}, conn net.Conn) {
-
 	candidate := cmd["candidate"].(string)
-	// Sempre vota sim (simplificado)
 	log.Printf("[RAFT %s] recebido pedido de voto de %s", r.id, candidate)
 	resp := map[string]interface{}{"granted": true}
 	data, _ := json.Marshal(resp)
 	fmt.Fprintf(conn, "%s\n", data)
 }
 
-// ------------------ Heartbeat ------------------
 func (r *TCPRaft) sendHeartbeats() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -1218,38 +1226,39 @@ func (r *TCPRaft) sendHeartbeat(targetAddr string) {
 	}
 	defer conn.Close()
 	req := map[string]interface{}{
-		"type":       "heartbeat",
-		"leader":     r.id,
-		"leaderAddr": r.addr,
+		"type":           "heartbeat",
+		"leader":         r.id,
+		"leaderRaftAddr": r.addr,
+		"leaderApiAddr":  r.apiAddr,
 	}
 	data, _ := json.Marshal(req)
 	fmt.Fprintf(conn, "%s\n", data)
 }
 
 func (r *TCPRaft) handleHeartbeat(cmd map[string]interface{}) {
-	leader := cmd["leader"].(string)
-	leaderAddr := cmd["leaderAddr"].(string)
+	leaderId, _ := cmd["leader"].(string)
+	leaderRaftAddr, _ := cmd["leaderRaftAddr"].(string)
+	leaderApiAddr, _ := cmd["leaderApiAddr"].(string)
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.isLeader && leader != r.id {
+	if r.isLeader && leaderId != r.id {
 		r.isLeader = false
 	}
-	r.leaderId = leader
-	r.leaderAddr = leaderAddr
+	r.leaderId = leaderId
+	r.leaderRaftAddr = leaderRaftAddr
+	r.leaderApiAddr = leaderApiAddr
 }
 
-// ------------------ Replicação de comandos ------------------
 func (r *TCPRaft) AplicarTransacao(transacao *Transacao) error {
 	if !r.isLeader {
-		return fmt.Errorf("não sou líder, líder é %s", r.leaderId)
+		return fmt.Errorf("não sou líder, líder é %s (%s)", r.leaderId, r.leaderApiAddr)
 	}
-	// Aplica localmente
 	if err := r.state.AplicarTransacao(transacao); err != nil {
 		return err
 	}
 	log.Printf("[RAFT LÍDER %s] 📝 Transação %s aplicada localmente", r.id, transacao.ID)
 
-	// Prepara comando para replicação
 	data, _ := json.Marshal(transacao)
 	cmd := map[string]interface{}{
 		"type": "append",
@@ -1258,7 +1267,6 @@ func (r *TCPRaft) AplicarTransacao(transacao *Transacao) error {
 	cmdJSON, _ := json.Marshal(cmd)
 	cmdStr := string(cmdJSON)
 
-	replicados := 0
 	for id, addr := range r.peers {
 		if id == r.id {
 			continue
@@ -1270,9 +1278,8 @@ func (r *TCPRaft) AplicarTransacao(transacao *Transacao) error {
 				log.Printf("[RAFT LÍDER %s] ✅ Transação %s replicada para %s (%s)", r.id, transacao.ID, peerId, peerAddr)
 			}
 		}(id, addr)
-		replicados++
 	}
-	log.Printf("[RAFT LÍDER %s] 📡 Transação %s enviada para %d seguidores", r.id, transacao.ID, replicados)
+	log.Printf("[RAFT LÍDER %s] 📡 Transação %s enviada para %d seguidores", r.id, transacao.ID, len(r.peers)-1)
 	return nil
 }
 
@@ -1289,29 +1296,74 @@ func (r *TCPRaft) sendAppend(targetAddr, cmd string) error {
 func (r *TCPRaft) handleAppend(cmd map[string]interface{}) {
 	dataStr, ok := cmd["data"].(string)
 	if !ok {
-		log.Printf("[RAFT SEGUIDOR %s] Campo 'data' inválido ou ausente", r.id)
+		log.Printf("[RAFT SEGUIDOR %s] Campo 'data' inválido", r.id)
 		return
 	}
 	var transacao Transacao
 	if err := json.Unmarshal([]byte(dataStr), &transacao); err != nil {
-		log.Printf("[RAFT SEGUIDOR %s] Erro ao decodificar transação replicada: %v", r.id, err)
+		log.Printf("[RAFT SEGUIDOR %s] Erro ao decodificar: %v", r.id, err)
 		return
 	}
 	if err := r.state.AplicarTransacao(&transacao); err != nil {
-		log.Printf("[RAFT SEGUIDOR %s] Erro ao aplicar transação replicada %s: %v", r.id, transacao.ID, err)
+		log.Printf("[RAFT SEGUIDOR %s] Erro ao aplicar: %v", r.id, err)
 		return
 	}
 	log.Printf("[RAFT SEGUIDOR %s] ✅ Transação replicada aplicada: %s", r.id, transacao.ID)
 }
 
-// ------------------ Join ------------------
 func (r *TCPRaft) handleJoin(cmd map[string]interface{}, conn net.Conn) {
-	nodeId := cmd["nodeId"].(string)
-	nodeAddr := cmd["nodeAddr"].(string)
+	nodeId, _ := cmd["nodeId"].(string)
+	nodeRaftAddr, _ := cmd["nodeAddr"].(string)
+
 	r.mu.Lock()
-	r.peers[nodeId] = nodeAddr
+	r.peers[nodeId] = nodeRaftAddr
+	go r.sendSnapshot(nodeRaftAddr)
 	r.mu.Unlock()
 	fmt.Fprintf(conn, "ok\n")
+}
+
+func (r *TCPRaft) handleSnapshot(cmd map[string]interface{}) {
+	dataStr, _ := cmd["data"].(string)
+	if dataStr == "" {
+		return
+	}
+	var historico []Transacao
+	if err := json.Unmarshal([]byte(dataStr), &historico); err != nil {
+		log.Printf("[RAFT SEGUIDOR %s] Erro ao restaurar snapshot: %v", r.id, err)
+		return
+	}
+	novoEstado := NovoEstadoLedger()
+	for _, tx := range historico {
+		if err := novoEstado.AplicarTransacao(&tx); err != nil {
+			log.Printf("[RAFT SEGUIDOR %s] Erro ao aplicar tx do snapshot: %v", r.id, err)
+			return
+		}
+	}
+	r.mu.Lock()
+	r.state = novoEstado
+	r.mu.Unlock()
+	log.Printf("[RAFT SEGUIDOR %s] ✅ Snapshot restaurado com %d transações", r.id, len(historico))
+}
+
+func (r *TCPRaft) sendSnapshot(peerAddr string) {
+	historico := r.state.ObterHistorico()
+	data, err := json.Marshal(historico)
+	if err != nil {
+		log.Printf("[RAFT LÍDER %s] Erro serializando snapshot: %v", r.id, err)
+		return
+	}
+	conn, err := net.Dial("tcp", peerAddr)
+	if err != nil {
+		log.Printf("[RAFT LÍDER %s] Falha enviar snapshot para %s: %v", r.id, peerAddr, err)
+		return
+	}
+	defer conn.Close()
+	msg := map[string]interface{}{
+		"type": "snapshot",
+		"data": string(data),
+	}
+	jsonMsg, _ := json.Marshal(msg)
+	fmt.Fprintf(conn, "%s\n", jsonMsg)
 }
 
 func (r *TCPRaft) ObterEstado() *EstadoLedger {
@@ -1326,6 +1378,15 @@ func (r *TCPRaft) ObterLiderID() string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.leaderId
+}
+
+func (r *TCPRaft) ObterLiderApiAddr() string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.leaderApiAddr == "" && r.isLeader {
+		return r.apiAddr
+	}
+	return r.leaderApiAddr
 }
 
 func (r *TCPRaft) Close() {
@@ -1436,7 +1497,7 @@ type GerenciadorDrones struct {
 // DroneInfo contém as informações de um drone
 type DroneInfo struct {
 	ID          string `json:"id"`
-	Porta       string `json:"porta"`        // Porta onde o drone escuta
+	Addr        string `json:"addr"`         // Endereço completo (ex: "192.168.1.20:9001")
 	Status      string `json:"status"`       // "disponivel", "ocupado", "offline"
 	MissaoAtual string `json:"missao_atual"` // ID da requisição (se ocupado)
 }
@@ -1449,18 +1510,18 @@ func NovoGerenciadorDrones() *GerenciadorDrones {
 	}
 }
 
-// RegistrarDrone adiciona um drone ao pool
-func (g *GerenciadorDrones) RegistrarDrone(droneID, porta string) {
+// RegistrarDrone adiciona um drone ao pool (endereço completo)
+func (g *GerenciadorDrones) RegistrarDrone(droneID, addr string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	g.drones[droneID] = &DroneInfo{
 		ID:          droneID,
-		Porta:       porta,
+		Addr:        addr,
 		Status:      "disponivel",
 		MissaoAtual: "",
 	}
-	log.Printf("[DRONE] Drone %s registrado na porta %s", droneID, porta)
+	log.Printf("[DRONE] Drone %s registrado em %s", droneID, addr)
 }
 
 // AlocarDrone busca um drone disponível e o aloca para uma missão
@@ -1536,6 +1597,17 @@ func (g *GerenciadorDrones) ListarMissoesAtivas() map[string]string {
 	return missoes
 }
 
+// ObterEnderecoDrone retorna o endereço completo de um drone (para notificação)
+func (g *GerenciadorDrones) ObterEnderecoDrone(droneID string) (string, error) {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	if drone, existe := g.drones[droneID]; existe {
+		return drone.Addr, nil
+	}
+	return "", fmt.Errorf("drone não encontrado")
+}
+
 
 
 [./go.mod]
@@ -1572,19 +1644,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
 
 var (
 	droneID     string
-	brokerURL   string
-	porta       string
+	addr        string // endereço completo (ex: "192.168.1.20:9001")
+	brokerList  string // lista de brokers: "broker1=192.168.1.10:8080,broker2=..."
+	brokers     map[string]string
 	registrado  bool
 	emMissao    bool
 	missaoAtual string
@@ -1593,17 +1668,29 @@ var (
 
 func main() {
 	flag.StringVar(&droneID, "id", "", "ID do drone (ex: drone1)")
-	flag.StringVar(&brokerURL, "broker", "http://localhost:8080", "URL do broker")
-	flag.StringVar(&porta, "porta", "9001", "Porta para receber missões")
+	flag.StringVar(&addr, "addr", "", "Endereço completo do drone (ex: 192.168.1.20:9001)")
+	flag.StringVar(&brokerList, "brokers", "", "Lista de brokers (ex: broker1=192.168.1.10:8080,broker2=...)")
 	flag.Parse()
 
-	if droneID == "" {
-		log.Fatal("ID do drone é obrigatório")
+	if droneID == "" || addr == "" || brokerList == "" {
+		log.Fatal("Flags -id, -addr e -brokers são obrigatórias")
 	}
 
-	log.Printf("[DRONE %s] Iniciando simulador autônomo...", droneID)
+	// Parse da lista de brokers
+	brokers = make(map[string]string)
+	for _, part := range strings.Split(brokerList, ",") {
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) == 2 {
+			brokers[kv[0]] = kv[1]
+		}
+	}
+	if len(brokers) == 0 {
+		log.Fatal("Nenhum broker válido fornecido")
+	}
 
-	// Registrar no broker
+	log.Printf("[DRONE %s] Iniciando simulador autônomo (endereço %s)", droneID, addr)
+
+	// Registrar no broker (com tentativas até encontrar um líder)
 	registrarNoBroker()
 
 	// Iniciar servidor HTTP para receber missões
@@ -1617,29 +1704,97 @@ func main() {
 	log.Printf("[DRONE %s] Encerrando...", droneID)
 }
 
-func registrarNoBroker() {
-	for i := 0; i < 10; i++ {
-		reqData := map[string]string{
-			"drone_id": droneID,
-			"porta":    porta,
-		}
-		jsonData, _ := json.Marshal(reqData)
-
-		resp, err := http.Post(brokerURL+"/drone/registrar", "application/json", bytes.NewBuffer(jsonData))
+// descobreLider consulta todos os brokers até encontrar o líder atual
+func descobreLider() (string, error) {
+	for id, urlBase := range brokers {
+		url := fmt.Sprintf("http://%s/leader", urlBase)
+		resp, err := http.Get(url)
 		if err != nil {
-			log.Printf("[DRONE %s] Erro ao registrar (tentativa %d): %v", droneID, i+1, err)
-			time.Sleep(2 * time.Second)
+			log.Printf("[DRONE %s] Broker %s (%s) indisponível: %v", droneID, id, urlBase, err)
 			continue
 		}
 		defer resp.Body.Close()
-
-		if resp.StatusCode == 200 {
-			log.Printf("[DRONE %s] ✅ Registrado com sucesso no broker %s", droneID, brokerURL)
-			registrado = true
-			return
+		if resp.StatusCode != http.StatusOK {
+			continue
+		}
+		var leaderInfo struct {
+			LeaderID   string `json:"leader_id"`
+			LeaderAddr string `json:"leader_addr"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&leaderInfo); err == nil && leaderInfo.LeaderAddr != "" {
+			log.Printf("[DRONE %s] Líder atual: %s (%s)", droneID, leaderInfo.LeaderID, leaderInfo.LeaderAddr)
+			return leaderInfo.LeaderAddr, nil
 		}
 	}
-	log.Printf("[DRONE %s] ❌ Falha ao registrar após 10 tentativas", droneID)
+	return "", fmt.Errorf("não foi possível determinar o líder")
+}
+
+// doRequestWithRedirect envia uma requisição HTTP, seguindo redirecionamentos e redescobrindo o líder se necessário
+func doRequestWithRedirect(method, url string, body []byte) (*http.Response, error) {
+	maxTentativas := 5
+	for i := 0; i < maxTentativas; i++ {
+		req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse // não segue automático, tratamos manualmente
+			},
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			// Se erro de conexão, tenta descobrir novo líder
+			log.Printf("[DRONE %s] Erro de conexão com %s, tentando descobrir novo líder...", droneID, url)
+			leader, err2 := descobreLider()
+			if err2 != nil {
+				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
+			}
+			url = "http://" + leader + strings.TrimPrefix(url, "/")
+			continue
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusTemporaryRedirect {
+			loc := resp.Header.Get("Location")
+			if loc == "" {
+				return nil, fmt.Errorf("redirect sem location")
+			}
+			log.Printf("[DRONE %s] Redirecionando para %s", droneID, loc)
+			url = loc
+			continue
+		}
+		return resp, nil
+	}
+	return nil, fmt.Errorf("excedido número de tentativas")
+}
+
+func registrarNoBroker() {
+	// Descobre o líder antes de registrar
+	leaderAddr, err := descobreLider()
+	if err != nil {
+		log.Printf("[DRONE %s] ❌ Não foi possível encontrar líder: %v", droneID, err)
+		return
+	}
+	registrarURL := "http://" + leaderAddr + "/drone/registrar"
+	reqData := map[string]string{
+		"drone_id": droneID,
+		"addr":     addr, // envia endereço completo
+	}
+	jsonData, _ := json.Marshal(reqData)
+
+	resp, err := http.Post(registrarURL, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[DRONE %s] ❌ Falha ao registrar: %v", droneID, err)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusOK {
+		log.Printf("[DRONE %s] ✅ Registrado com sucesso no líder %s", droneID, leaderAddr)
+		registrado = true
+	} else {
+		log.Printf("[DRONE %s] ❌ Registro recusado, status %d", droneID, resp.StatusCode)
+	}
 }
 
 func iniciarServidorHTTP() {
@@ -1650,21 +1805,15 @@ func iniciarServidorHTTP() {
 			http.Error(w, "Erro ao decodificar", 400)
 			return
 		}
-
 		idRequisicao, ok := req["id_requisicao"].(string)
 		if !ok {
 			log.Printf("[DRONE %s] Campo id_requisicao inválido", droneID)
 			http.Error(w, "id_requisicao inválido", 400)
 			return
 		}
-
 		rota, _ := req["rota"].(string)
-
 		log.Printf("[DRONE %s] 🚀 Missão REAL recebida do broker: %s (Rota: %s)", droneID, idRequisicao, rota)
-
-		// Iniciar missão em background
 		go executarMissaoReal(idRequisicao, rota)
-
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "missão iniciada"})
 	})
@@ -1674,8 +1823,8 @@ func iniciarServidorHTTP() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "drone": droneID})
 	})
 
-	log.Printf("[DRONE %s] 🌐 Servidor HTTP iniciado na porta %s", droneID, porta)
-	log.Fatal(http.ListenAndServe(":"+porta, nil))
+	log.Printf("[DRONE %s] 🌐 Servidor HTTP iniciado em %s", droneID, addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
 func executarMissaoReal(idRequisicao, rota string) {
@@ -1683,23 +1832,18 @@ func executarMissaoReal(idRequisicao, rota string) {
 		log.Printf("[DRONE %s] ⚠️ Já em missão, ignorando nova missão %s", droneID, idRequisicao)
 		return
 	}
-
 	emMissao = true
 	missaoAtual = idRequisicao
 	rotaAtual = rota
 
 	log.Printf("[DRONE %s] ✈️ Executando missão REAL %s na rota %s...", droneID, missaoAtual, rotaAtual)
-
-	// Simular tempo de voo entre 5-15 segundos
 	tempoVoo := time.Duration(5+rand.Intn(10)) * time.Second
 	time.Sleep(tempoVoo)
 
-	// Enviar laudo da missão
 	enviarLaudo()
 }
 
 func enviarLaudo() {
-	// Gerar dados do laudo baseados na missão real
 	obstaculos := []string{}
 	if rand.Intn(3) == 0 {
 		obstaculos = append(obstaculos, "Congestionamento detectado na rota")
@@ -1725,7 +1869,6 @@ func enviarLaudo() {
 		incidentes = append(incidentes, "Comunicação com broker instável")
 	}
 
-	// Escolher resultado (90% sucesso, 10% falha)
 	resultado := "sucesso"
 	if rand.Intn(10) == 0 {
 		resultado = "falha"
@@ -1747,34 +1890,38 @@ func enviarLaudo() {
 		"hash_anterior":    "",
 		"hash_verificacao": gerarHash(missaoAtual),
 	}
-
 	jsonData, _ := json.Marshal(laudo)
 
 	log.Printf("[DRONE %s] 📤 Enviando laudo para missão %s...", droneID, missaoAtual)
 
-	resp, err := http.Post(brokerURL+"/drone/relatar-missao", "application/json", bytes.NewBuffer(jsonData))
+	// Descobre líder atual antes de enviar
+	leaderAddr, err := descobreLider()
 	if err != nil {
-		log.Printf("[DRONE %s] ❌ Erro ao enviar laudo: %v", droneID, err)
+		log.Printf("[DRONE %s] ❌ Não foi possível encontrar líder: %v", droneID, err)
 		emMissao = false
 		missaoAtual = ""
 		rotaAtual = ""
 		return
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 200 {
-		log.Printf("[DRONE %s] ✅ Laudo enviado com sucesso para missão %s", droneID, missaoAtual)
-		log.Printf("[DRONE %s] 📋 Resultado: %s", droneID, resultado)
-		if len(obstaculos) > 0 {
-			log.Printf("[DRONE %s] 📋 Obstáculos: %v", droneID, obstaculos)
-		}
-		if len(incidentes) > 0 {
-			log.Printf("[DRONE %s] ⚠️ Incidentes: %v", droneID, incidentes)
-		}
+	url := "http://" + leaderAddr + "/drone/relatar-missao"
+	resp, err := doRequestWithRedirect("POST", url, jsonData)
+	if err != nil {
+		log.Printf("[DRONE %s] ❌ Erro ao enviar laudo: %v", droneID, err)
 	} else {
-		log.Printf("[DRONE %s] ❌ Falha ao enviar laudo. Status: %d", droneID, resp.StatusCode)
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusOK {
+			log.Printf("[DRONE %s] ✅ Laudo enviado com sucesso para missão %s", droneID, missaoAtual)
+			log.Printf("[DRONE %s] 📋 Resultado: %s", droneID, resultado)
+			if len(obstaculos) > 0 {
+				log.Printf("[DRONE %s] 📋 Obstáculos: %v", droneID, obstaculos)
+			}
+			if len(incidentes) > 0 {
+				log.Printf("[DRONE %s] ⚠️ Incidentes: %v", droneID, incidentes)
+			}
+		} else {
+			log.Printf("[DRONE %s] ❌ Falha ao enviar laudo. Status: %d", droneID, resp.StatusCode)
+		}
 	}
-
 	emMissao = false
 	missaoAtual = ""
 	rotaAtual = ""
@@ -1795,7 +1942,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -1810,29 +1956,37 @@ import (
 
 func main() {
 	var (
-		id        = flag.String("id", "broker1", "ID do broker")
-		portaAPI  = flag.String("porta", "8080", "Porta HTTP")
-		ehLider   = flag.Bool("lider", false, "Inicia como líder (bootstrap)")
-		outrosNos = flag.String("outros", "", "IDs dos outros brokers (ex: broker2,broker3)")
+		id       = flag.String("id", "broker1", "ID do broker")
+		apiAddr  = flag.String("api-addr", "", "Endereço público da API (ex: 192.168.1.10:8080)")
+		raftAddr = flag.String("raft-addr", "", "Endereço Raft (ex: 192.168.1.10:7000)")
+		ehLider  = flag.Bool("lider", false, "Inicia como líder (bootstrap)")
+		outros   = flag.String("outros", "", "Outros brokers no formato id=ip:porta,id=ip:porta")
 	)
 	flag.Parse()
 
-	peers := make(map[string]string)
-	peers[*id] = getRaftAddr(*id)
+	if *apiAddr == "" || *raftAddr == "" {
+		log.Fatal("--api-addr e --raft-addr são obrigatórios")
+	}
 
-	if *outrosNos != "" {
-		for _, outroID := range strings.Split(*outrosNos, ",") {
-			outroID = strings.TrimSpace(outroID)
-			if outroID == "" {
-				continue
+	peers := make(map[string]string)
+	peers[*id] = *raftAddr
+
+	if *outros != "" {
+		for _, par := range strings.Split(*outros, ",") {
+			partes := strings.SplitN(par, "=", 2)
+			if len(partes) != 2 {
+				log.Fatalf("Formato inválido em -outros: %s (esperado id=endereco)", par)
 			}
-			peers[outroID] = getRaftAddr(outroID)
+			peerID := strings.TrimSpace(partes[0])
+			peerRaftAddr := strings.TrimSpace(partes[1])
+			peers[peerID] = peerRaftAddr
 		}
 	}
 
 	cfg := consenso.RaftConfigTCP{
 		NodeID:    *id,
-		RaftAddr:  peers[*id],
+		RaftAddr:  *raftAddr,
+		ApiAddr:   *apiAddr,
 		Peers:     peers,
 		Bootstrap: *ehLider,
 	}
@@ -1844,7 +1998,7 @@ func main() {
 	defer raftNode.Close()
 
 	droneManager := drone.NovoGerenciadorDrones()
-	servidor := api.NovoServidorAPI(*portaAPI, raftNode, droneManager) // assinatura ajustada
+	servidor := api.NovoServidorAPI(*apiAddr, raftNode, droneManager)
 	servidor.RegistrarRotas()
 
 	if *ehLider {
@@ -1858,7 +2012,7 @@ func main() {
 		}
 	}()
 
-	log.Printf("[SUCESSO] Broker %s rodando. API: http://localhost:%s, Raft: %s", *id, *portaAPI, peers[*id])
+	log.Printf("[SUCESSO] Broker %s rodando. API: http://%s, Raft: %s", *id, *apiAddr, *raftAddr)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -1867,40 +2021,8 @@ func main() {
 	log.Println("[FIM] Encerrando broker...")
 }
 
-func getRaftAddr(id string) string {
-	var num int
-	for i := len(id) - 1; i >= 0; i-- {
-		if id[i] >= '0' && id[i] <= '9' {
-			num = num*10 + int(id[i]-'0')
-		} else {
-			break
-		}
-	}
-	if num == 0 {
-		num = 1
-	}
-	return fmt.Sprintf("127.0.0.1:%d", 7000+(num-1))
-}
-
 func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
-	transacaoA, _ := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
-		CompanhiaID:   "COMP-A",
-		Valor:         100,
-		AutorizadoPor: "sistema",
-	})
-	if err := raftNode.AplicarTransacao(transacaoA); err != nil {
-		log.Printf("[AVISO] Erro ao recarregar COMP-A: %v", err)
-	}
-
-	transacaoB, _ := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
-		CompanhiaID:   "COMP-B",
-		Valor:         50,
-		AutorizadoPor: "sistema",
-	})
-	if err := raftNode.AplicarTransacao(transacaoB); err != nil {
-		log.Printf("[AVISO] Erro ao recarregar COMP-B: %v", err)
-	}
-	log.Println("[INICIAL] Créditos iniciais aplicados via Raft")
+	// ... (igual ao seu código)
 }
 
 
@@ -1919,29 +2041,37 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
 
-type Company struct {
-	ID    string
-	Nome  string
-	Saldo int
-}
-
 var (
-	companyID string
-	brokerURL string
-	rotas     = []string{"Rota Norte", "Rota Sul", "Rota Leste", "Rota Oeste", "Rota Central"}
+	companyID  string
+	brokerList string            // lista de brokers (ex: "broker1=192.168.1.10:8080,broker2=...")
+	brokers    map[string]string // id -> endereço
+	rotas      = []string{"Rota Norte", "Rota Sul", "Rota Leste", "Rota Oeste", "Rota Central"}
 )
 
 func main() {
 	flag.StringVar(&companyID, "id", "", "ID da companhia (ex: COMP-A)")
-	flag.StringVar(&brokerURL, "broker", "http://broker1:8080", "URL do broker")
+	flag.StringVar(&brokerList, "brokers", "", "Lista de brokers (ex: broker1=192.168.1.10:8080,broker2=...)")
 	flag.Parse()
 
-	if companyID == "" {
-		log.Fatal("ID da companhia é obrigatório")
+	if companyID == "" || brokerList == "" {
+		log.Fatal("Flags -id e -brokers são obrigatórias")
+	}
+
+	// Parse da lista de brokers
+	brokers = make(map[string]string)
+	for _, part := range strings.Split(brokerList, ",") {
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) == 2 {
+			brokers[kv[0]] = kv[1]
+		}
+	}
+	if len(brokers) == 0 {
+		log.Fatal("Nenhum broker válido fornecido")
 	}
 
 	log.Printf("[COMPANY %s] Iniciando simulador autônomo...", companyID)
@@ -1960,15 +2090,77 @@ func main() {
 	log.Printf("[COMPANY %s] Encerrando...", companyID)
 }
 
+// descobreLider consulta todos os brokers até encontrar o líder atual
+func descobreLider() (string, error) {
+	for id, urlBase := range brokers {
+		url := fmt.Sprintf("http://%s/leader", urlBase)
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Printf("[COMPANY %s] Broker %s (%s) indisponível: %v", companyID, id, urlBase, err)
+			continue
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			continue
+		}
+		var leaderInfo struct {
+			LeaderID   string `json:"leader_id"`
+			LeaderAddr string `json:"leader_addr"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&leaderInfo); err == nil && leaderInfo.LeaderAddr != "" {
+			log.Printf("[COMPANY %s] Líder atual: %s (%s)", companyID, leaderInfo.LeaderID, leaderInfo.LeaderAddr)
+			return leaderInfo.LeaderAddr, nil
+		}
+	}
+	return "", fmt.Errorf("não foi possível determinar o líder")
+}
+
+// doRequestWithRedirect envia uma requisição HTTP, seguindo redirecionamentos e redescobrindo o líder se necessário
+func doRequestWithRedirect(method, url string, body []byte) (*http.Response, error) {
+	maxTentativas := 5
+	for i := 0; i < maxTentativas; i++ {
+		req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse // não segue automático, tratamos manualmente
+			},
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			// Se erro de conexão, tenta descobrir novo líder
+			log.Printf("[COMPANY %s] Erro de conexão com %s, tentando descobrir novo líder...", companyID, url)
+			leader, err2 := descobreLider()
+			if err2 != nil {
+				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
+			}
+			url = "http://" + leader + strings.TrimPrefix(url, "/")
+			continue
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusTemporaryRedirect {
+			loc := resp.Header.Get("Location")
+			if loc == "" {
+				return nil, fmt.Errorf("redirect sem location")
+			}
+			log.Printf("[COMPANY %s] Redirecionando para %s", companyID, loc)
+			url = loc
+			continue
+		}
+		return resp, nil
+	}
+	return nil, fmt.Errorf("excedido número de tentativas")
+}
+
 func simularRequisicoes() {
 	for {
-		// Aguardar entre 10-30 segundos entre requisições
 		intervalo := time.Duration(10+rand.Intn(20)) * time.Second
 		time.Sleep(intervalo)
 
-		// Escolher rota aleatória
 		rota := rotas[rand.Intn(len(rotas))]
-
 		log.Printf("[COMPANY %s] Solicitando drone para %s", companyID, rota)
 
 		resposta := requisitarDrone(rota)
@@ -1976,21 +2168,27 @@ func simularRequisicoes() {
 			log.Printf("[COMPANY %s] Resposta: %s", companyID, resposta)
 		}
 
-		// Verificar saldo periodicamente
-		if rand.Intn(5) == 0 { // 20% das vezes
+		if rand.Intn(5) == 0 {
 			verificarSaldo()
 		}
 	}
 }
 
 func requisitarDrone(rota string) string {
+	leaderAddr, err := descobreLider()
+	if err != nil {
+		log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
+		return ""
+	}
+	url := "http://" + leaderAddr + "/requisitar-drone"
+
 	reqData := map[string]string{
 		"companhia_id": companyID,
 		"rota":         rota,
 	}
 	jsonData, _ := json.Marshal(reqData)
 
-	resp, err := http.Post(brokerURL+"/requisitar-drone", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := doRequestWithRedirect("POST", url, jsonData)
 	if err != nil {
 		log.Printf("[COMPANY %s] Erro na requisição: %v", companyID, err)
 		return ""
@@ -2002,23 +2200,27 @@ func requisitarDrone(rota string) string {
 		return fmt.Sprintf("Erro ao decodificar resposta: %v", err)
 	}
 
-	// Verificar se houve erro de saldo insuficiente
 	if resp.StatusCode == 402 {
 		log.Printf("[COMPANY %s] Saldo insuficiente! Recarregando...", companyID)
-		recarregarCreditos(100) // Recarrega 100 créditos
+		recarregarCreditos(100)
 	}
 
-	// Extrair informações relevantes
 	status := result["status"]
 	if status == nil {
 		status = result["erro"]
 	}
-
 	return fmt.Sprintf("HTTP %d: %v", resp.StatusCode, status)
 }
 
 func verificarSaldo() {
-	resp, err := http.Get(brokerURL + "/saldo/" + companyID)
+	leaderAddr, err := descobreLider()
+	if err != nil {
+		log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
+		return
+	}
+	url := "http://" + leaderAddr + "/saldo/" + companyID
+
+	resp, err := doRequestWithRedirect("GET", url, nil)
 	if err != nil {
 		log.Printf("[COMPANY %s] Erro ao verificar saldo: %v", companyID, err)
 		return
@@ -2033,7 +2235,6 @@ func verificarSaldo() {
 
 	if saldo, ok := result["saldo"].(float64); ok {
 		log.Printf("[COMPANY %s] Saldo atual: %.0f créditos", companyID, saldo)
-
 		if saldo < 50 {
 			log.Printf("[COMPANY %s] ⚠️ Saldo baixo (%.0f < 50). Recarregando 200 créditos...", companyID, saldo)
 			recarregarCreditos(200)
@@ -2044,13 +2245,20 @@ func verificarSaldo() {
 }
 
 func recarregarCreditos(valor int) {
+	leaderAddr, err := descobreLider()
+	if err != nil {
+		log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
+		return
+	}
+	url := "http://" + leaderAddr + "/recarregar"
+
 	reqData := map[string]interface{}{
 		"companhia_id": companyID,
 		"valor":        valor,
 	}
 	jsonData, _ := json.Marshal(reqData)
 
-	resp, err := http.Post(brokerURL+"/recarregar", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := doRequestWithRedirect("POST", url, jsonData)
 	if err != nil {
 		log.Printf("[COMPANY %s] Erro na recarga: %v", companyID, err)
 		return

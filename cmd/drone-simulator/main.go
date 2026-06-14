@@ -4,19 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
 
 var (
 	droneID     string
-	brokerURL   string
-	porta       string
+	addr        string // endereço completo (ex: "192.168.1.20:9001")
+	brokerList  string // lista de brokers: "broker1=192.168.1.10:8080,broker2=..."
+	brokers     map[string]string
 	registrado  bool
 	emMissao    bool
 	missaoAtual string
@@ -25,17 +28,29 @@ var (
 
 func main() {
 	flag.StringVar(&droneID, "id", "", "ID do drone (ex: drone1)")
-	flag.StringVar(&brokerURL, "broker", "http://localhost:8080", "URL do broker")
-	flag.StringVar(&porta, "porta", "9001", "Porta para receber missões")
+	flag.StringVar(&addr, "addr", "", "Endereço completo do drone (ex: 192.168.1.20:9001)")
+	flag.StringVar(&brokerList, "brokers", "", "Lista de brokers (ex: broker1=192.168.1.10:8080,broker2=...)")
 	flag.Parse()
 
-	if droneID == "" {
-		log.Fatal("ID do drone é obrigatório")
+	if droneID == "" || addr == "" || brokerList == "" {
+		log.Fatal("Flags -id, -addr e -brokers são obrigatórias")
 	}
 
-	log.Printf("[DRONE %s] Iniciando simulador autônomo...", droneID)
+	// Parse da lista de brokers
+	brokers = make(map[string]string)
+	for _, part := range strings.Split(brokerList, ",") {
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) == 2 {
+			brokers[kv[0]] = kv[1]
+		}
+	}
+	if len(brokers) == 0 {
+		log.Fatal("Nenhum broker válido fornecido")
+	}
 
-	// Registrar no broker
+	log.Printf("[DRONE %s] Iniciando simulador autônomo (endereço %s)", droneID, addr)
+
+	// Registrar no broker (com tentativas até encontrar um líder)
 	registrarNoBroker()
 
 	// Iniciar servidor HTTP para receber missões
@@ -49,29 +64,97 @@ func main() {
 	log.Printf("[DRONE %s] Encerrando...", droneID)
 }
 
-func registrarNoBroker() {
-	for i := 0; i < 10; i++ {
-		reqData := map[string]string{
-			"drone_id": droneID,
-			"porta":    porta,
-		}
-		jsonData, _ := json.Marshal(reqData)
-
-		resp, err := http.Post(brokerURL+"/drone/registrar", "application/json", bytes.NewBuffer(jsonData))
+// descobreLider consulta todos os brokers até encontrar o líder atual
+func descobreLider() (string, error) {
+	for id, urlBase := range brokers {
+		url := fmt.Sprintf("http://%s/leader", urlBase)
+		resp, err := http.Get(url)
 		if err != nil {
-			log.Printf("[DRONE %s] Erro ao registrar (tentativa %d): %v", droneID, i+1, err)
-			time.Sleep(2 * time.Second)
+			log.Printf("[DRONE %s] Broker %s (%s) indisponível: %v", droneID, id, urlBase, err)
 			continue
 		}
 		defer resp.Body.Close()
-
-		if resp.StatusCode == 200 {
-			log.Printf("[DRONE %s] ✅ Registrado com sucesso no broker %s", droneID, brokerURL)
-			registrado = true
-			return
+		if resp.StatusCode != http.StatusOK {
+			continue
+		}
+		var leaderInfo struct {
+			LeaderID   string `json:"leader_id"`
+			LeaderAddr string `json:"leader_addr"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&leaderInfo); err == nil && leaderInfo.LeaderAddr != "" {
+			log.Printf("[DRONE %s] Líder atual: %s (%s)", droneID, leaderInfo.LeaderID, leaderInfo.LeaderAddr)
+			return leaderInfo.LeaderAddr, nil
 		}
 	}
-	log.Printf("[DRONE %s] ❌ Falha ao registrar após 10 tentativas", droneID)
+	return "", fmt.Errorf("não foi possível determinar o líder")
+}
+
+// doRequestWithRedirect envia uma requisição HTTP, seguindo redirecionamentos e redescobrindo o líder se necessário
+func doRequestWithRedirect(method, url string, body []byte) (*http.Response, error) {
+	maxTentativas := 5
+	for i := 0; i < maxTentativas; i++ {
+		req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse // não segue automático, tratamos manualmente
+			},
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			// Se erro de conexão, tenta descobrir novo líder
+			log.Printf("[DRONE %s] Erro de conexão com %s, tentando descobrir novo líder...", droneID, url)
+			leader, err2 := descobreLider()
+			if err2 != nil {
+				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
+			}
+			url = "http://" + leader + strings.TrimPrefix(url, "/")
+			continue
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusTemporaryRedirect {
+			loc := resp.Header.Get("Location")
+			if loc == "" {
+				return nil, fmt.Errorf("redirect sem location")
+			}
+			log.Printf("[DRONE %s] Redirecionando para %s", droneID, loc)
+			url = loc
+			continue
+		}
+		return resp, nil
+	}
+	return nil, fmt.Errorf("excedido número de tentativas")
+}
+
+func registrarNoBroker() {
+	// Descobre o líder antes de registrar
+	leaderAddr, err := descobreLider()
+	if err != nil {
+		log.Printf("[DRONE %s] ❌ Não foi possível encontrar líder: %v", droneID, err)
+		return
+	}
+	registrarURL := "http://" + leaderAddr + "/drone/registrar"
+	reqData := map[string]string{
+		"drone_id": droneID,
+		"addr":     addr, // envia endereço completo
+	}
+	jsonData, _ := json.Marshal(reqData)
+
+	resp, err := http.Post(registrarURL, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[DRONE %s] ❌ Falha ao registrar: %v", droneID, err)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusOK {
+		log.Printf("[DRONE %s] ✅ Registrado com sucesso no líder %s", droneID, leaderAddr)
+		registrado = true
+	} else {
+		log.Printf("[DRONE %s] ❌ Registro recusado, status %d", droneID, resp.StatusCode)
+	}
 }
 
 func iniciarServidorHTTP() {
@@ -82,21 +165,15 @@ func iniciarServidorHTTP() {
 			http.Error(w, "Erro ao decodificar", 400)
 			return
 		}
-
 		idRequisicao, ok := req["id_requisicao"].(string)
 		if !ok {
 			log.Printf("[DRONE %s] Campo id_requisicao inválido", droneID)
 			http.Error(w, "id_requisicao inválido", 400)
 			return
 		}
-
 		rota, _ := req["rota"].(string)
-
 		log.Printf("[DRONE %s] 🚀 Missão REAL recebida do broker: %s (Rota: %s)", droneID, idRequisicao, rota)
-
-		// Iniciar missão em background
 		go executarMissaoReal(idRequisicao, rota)
-
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "missão iniciada"})
 	})
@@ -106,8 +183,8 @@ func iniciarServidorHTTP() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "drone": droneID})
 	})
 
-	log.Printf("[DRONE %s] 🌐 Servidor HTTP iniciado na porta %s", droneID, porta)
-	log.Fatal(http.ListenAndServe(":"+porta, nil))
+	log.Printf("[DRONE %s] 🌐 Servidor HTTP iniciado em %s", droneID, addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
 func executarMissaoReal(idRequisicao, rota string) {
@@ -115,23 +192,18 @@ func executarMissaoReal(idRequisicao, rota string) {
 		log.Printf("[DRONE %s] ⚠️ Já em missão, ignorando nova missão %s", droneID, idRequisicao)
 		return
 	}
-
 	emMissao = true
 	missaoAtual = idRequisicao
 	rotaAtual = rota
 
 	log.Printf("[DRONE %s] ✈️ Executando missão REAL %s na rota %s...", droneID, missaoAtual, rotaAtual)
-
-	// Simular tempo de voo entre 5-15 segundos
 	tempoVoo := time.Duration(5+rand.Intn(10)) * time.Second
 	time.Sleep(tempoVoo)
 
-	// Enviar laudo da missão
 	enviarLaudo()
 }
 
 func enviarLaudo() {
-	// Gerar dados do laudo baseados na missão real
 	obstaculos := []string{}
 	if rand.Intn(3) == 0 {
 		obstaculos = append(obstaculos, "Congestionamento detectado na rota")
@@ -157,7 +229,6 @@ func enviarLaudo() {
 		incidentes = append(incidentes, "Comunicação com broker instável")
 	}
 
-	// Escolher resultado (90% sucesso, 10% falha)
 	resultado := "sucesso"
 	if rand.Intn(10) == 0 {
 		resultado = "falha"
@@ -179,34 +250,38 @@ func enviarLaudo() {
 		"hash_anterior":    "",
 		"hash_verificacao": gerarHash(missaoAtual),
 	}
-
 	jsonData, _ := json.Marshal(laudo)
 
 	log.Printf("[DRONE %s] 📤 Enviando laudo para missão %s...", droneID, missaoAtual)
 
-	resp, err := http.Post(brokerURL+"/drone/relatar-missao", "application/json", bytes.NewBuffer(jsonData))
+	// Descobre líder atual antes de enviar
+	leaderAddr, err := descobreLider()
 	if err != nil {
-		log.Printf("[DRONE %s] ❌ Erro ao enviar laudo: %v", droneID, err)
+		log.Printf("[DRONE %s] ❌ Não foi possível encontrar líder: %v", droneID, err)
 		emMissao = false
 		missaoAtual = ""
 		rotaAtual = ""
 		return
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 200 {
-		log.Printf("[DRONE %s] ✅ Laudo enviado com sucesso para missão %s", droneID, missaoAtual)
-		log.Printf("[DRONE %s] 📋 Resultado: %s", droneID, resultado)
-		if len(obstaculos) > 0 {
-			log.Printf("[DRONE %s] 📋 Obstáculos: %v", droneID, obstaculos)
-		}
-		if len(incidentes) > 0 {
-			log.Printf("[DRONE %s] ⚠️ Incidentes: %v", droneID, incidentes)
-		}
+	url := "http://" + leaderAddr + "/drone/relatar-missao"
+	resp, err := doRequestWithRedirect("POST", url, jsonData)
+	if err != nil {
+		log.Printf("[DRONE %s] ❌ Erro ao enviar laudo: %v", droneID, err)
 	} else {
-		log.Printf("[DRONE %s] ❌ Falha ao enviar laudo. Status: %d", droneID, resp.StatusCode)
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusOK {
+			log.Printf("[DRONE %s] ✅ Laudo enviado com sucesso para missão %s", droneID, missaoAtual)
+			log.Printf("[DRONE %s] 📋 Resultado: %s", droneID, resultado)
+			if len(obstaculos) > 0 {
+				log.Printf("[DRONE %s] 📋 Obstáculos: %v", droneID, obstaculos)
+			}
+			if len(incidentes) > 0 {
+				log.Printf("[DRONE %s] ⚠️ Incidentes: %v", droneID, incidentes)
+			}
+		} else {
+			log.Printf("[DRONE %s] ❌ Falha ao enviar laudo. Status: %d", droneID, resp.StatusCode)
+		}
 	}
-
 	emMissao = false
 	missaoAtual = ""
 	rotaAtual = ""

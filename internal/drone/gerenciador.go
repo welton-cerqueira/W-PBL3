@@ -16,7 +16,7 @@ type GerenciadorDrones struct {
 // DroneInfo contém as informações de um drone
 type DroneInfo struct {
 	ID          string `json:"id"`
-	Porta       string `json:"porta"`        // Porta onde o drone escuta
+	Addr        string `json:"addr"`         // Endereço completo (ex: "192.168.1.20:9001")
 	Status      string `json:"status"`       // "disponivel", "ocupado", "offline"
 	MissaoAtual string `json:"missao_atual"` // ID da requisição (se ocupado)
 }
@@ -29,18 +29,18 @@ func NovoGerenciadorDrones() *GerenciadorDrones {
 	}
 }
 
-// RegistrarDrone adiciona um drone ao pool
-func (g *GerenciadorDrones) RegistrarDrone(droneID, porta string) {
+// RegistrarDrone adiciona um drone ao pool (endereço completo)
+func (g *GerenciadorDrones) RegistrarDrone(droneID, addr string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	g.drones[droneID] = &DroneInfo{
 		ID:          droneID,
-		Porta:       porta,
+		Addr:        addr,
 		Status:      "disponivel",
 		MissaoAtual: "",
 	}
-	log.Printf("[DRONE] Drone %s registrado na porta %s", droneID, porta)
+	log.Printf("[DRONE] Drone %s registrado em %s", droneID, addr)
 }
 
 // AlocarDrone busca um drone disponível e o aloca para uma missão
@@ -114,4 +114,15 @@ func (g *GerenciadorDrones) ListarMissoesAtivas() map[string]string {
 		missoes[idReq] = droneID
 	}
 	return missoes
+}
+
+// ObterEnderecoDrone retorna o endereço completo de um drone (para notificação)
+func (g *GerenciadorDrones) ObterEnderecoDrone(droneID string) (string, error) {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	if drone, existe := g.drones[droneID]; existe {
+		return drone.Addr, nil
+	}
+	return "", fmt.Errorf("drone não encontrado")
 }

@@ -13,7 +13,7 @@ type ServidorAPI struct {
 	app          *fiber.App
 	porta        string
 	estado       *consenso.EstadoLedger
-	raftNode     *consenso.TCPRaft // ANTES era *consenso.NoRaft
+	raftNode     *consenso.TCPRaft
 	droneManager *drone.GerenciadorDrones
 	drones       map[string]string
 }
@@ -49,6 +49,7 @@ func (s *ServidorAPI) RegistrarRotas() {
 	s.app.Get("/saldo/:companhia_id", s.consultarSaldo)
 	s.app.Get("/historico", s.consultarHistorico)
 	s.app.Get("/missoes", s.listarMissoes)
+	s.app.Get("/leader", s.getLeader) // NOVA ROTA: retorna o líder atual
 
 	// Rotas para companhias
 	s.app.Post("/requisitar-drone", s.requisitarDrone)
@@ -57,13 +58,13 @@ func (s *ServidorAPI) RegistrarRotas() {
 	// Rotas para drones
 	s.app.Post("/drone/registrar", s.registrarDrone)
 	s.app.Post("/drone/relatar-missao", s.relatarMissao)
-	s.app.Post("/drone/liberar", s.liberarDrone) // ADICIONAR ESTA LINHA
+	s.app.Post("/drone/liberar", s.liberarDrone)
 
 	// Rotas internas entre brokers
 	s.app.Post("/raft/comando", s.receberComandoRaft)
 
 	// Rotas de auditoria
-	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos) // ADICIONAR ESTA LINHA
-	s.app.Get("/estatisticas", s.obterEstatisticasLaudos)   // ADICIONAR ESTA LINHA
+	s.app.Get("/verificar-cadeia", s.verificarCadeiaLaudos)
+	s.app.Get("/estatisticas", s.obterEstatisticasLaudos)
 	s.app.Get("/drone/status", s.statusDrone)
 }

@@ -10,29 +10,37 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
 
-type Company struct {
-	ID    string
-	Nome  string
-	Saldo int
-}
-
 var (
-	companyID string
-	brokerURL string
-	rotas     = []string{"Rota Norte", "Rota Sul", "Rota Leste", "Rota Oeste", "Rota Central"}
+	companyID  string
+	brokerList string            // lista de brokers (ex: "broker1=192.168.1.10:8080,broker2=...")
+	brokers    map[string]string // id -> endereço
+	rotas      = []string{"Rota Norte", "Rota Sul", "Rota Leste", "Rota Oeste", "Rota Central"}
 )
 
 func main() {
 	flag.StringVar(&companyID, "id", "", "ID da companhia (ex: COMP-A)")
-	flag.StringVar(&brokerURL, "broker", "http://broker1:8080", "URL do broker")
+	flag.StringVar(&brokerList, "brokers", "", "Lista de brokers (ex: broker1=192.168.1.10:8080,broker2=...)")
 	flag.Parse()
 
-	if companyID == "" {
-		log.Fatal("ID da companhia é obrigatório")
+	if companyID == "" || brokerList == "" {
+		log.Fatal("Flags -id e -brokers são obrigatórias")
+	}
+
+	// Parse da lista de brokers
+	brokers = make(map[string]string)
+	for _, part := range strings.Split(brokerList, ",") {
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) == 2 {
+			brokers[kv[0]] = kv[1]
+		}
+	}
+	if len(brokers) == 0 {
+		log.Fatal("Nenhum broker válido fornecido")
 	}
 
 	log.Printf("[COMPANY %s] Iniciando simulador autônomo...", companyID)
@@ -51,15 +59,77 @@ func main() {
 	log.Printf("[COMPANY %s] Encerrando...", companyID)
 }
 
+// descobreLider consulta todos os brokers até encontrar o líder atual
+func descobreLider() (string, error) {
+	for id, urlBase := range brokers {
+		url := fmt.Sprintf("http://%s/leader", urlBase)
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Printf("[COMPANY %s] Broker %s (%s) indisponível: %v", companyID, id, urlBase, err)
+			continue
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			continue
+		}
+		var leaderInfo struct {
+			LeaderID   string `json:"leader_id"`
+			LeaderAddr string `json:"leader_addr"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&leaderInfo); err == nil && leaderInfo.LeaderAddr != "" {
+			log.Printf("[COMPANY %s] Líder atual: %s (%s)", companyID, leaderInfo.LeaderID, leaderInfo.LeaderAddr)
+			return leaderInfo.LeaderAddr, nil
+		}
+	}
+	return "", fmt.Errorf("não foi possível determinar o líder")
+}
+
+// doRequestWithRedirect envia uma requisição HTTP, seguindo redirecionamentos e redescobrindo o líder se necessário
+func doRequestWithRedirect(method, url string, body []byte) (*http.Response, error) {
+	maxTentativas := 5
+	for i := 0; i < maxTentativas; i++ {
+		req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse // não segue automático, tratamos manualmente
+			},
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			// Se erro de conexão, tenta descobrir novo líder
+			log.Printf("[COMPANY %s] Erro de conexão com %s, tentando descobrir novo líder...", companyID, url)
+			leader, err2 := descobreLider()
+			if err2 != nil {
+				return nil, fmt.Errorf("falha ao descobrir líder: %v", err2)
+			}
+			url = "http://" + leader + strings.TrimPrefix(url, "/")
+			continue
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusTemporaryRedirect {
+			loc := resp.Header.Get("Location")
+			if loc == "" {
+				return nil, fmt.Errorf("redirect sem location")
+			}
+			log.Printf("[COMPANY %s] Redirecionando para %s", companyID, loc)
+			url = loc
+			continue
+		}
+		return resp, nil
+	}
+	return nil, fmt.Errorf("excedido número de tentativas")
+}
+
 func simularRequisicoes() {
 	for {
-		// Aguardar entre 10-30 segundos entre requisições
 		intervalo := time.Duration(10+rand.Intn(20)) * time.Second
 		time.Sleep(intervalo)
 
-		// Escolher rota aleatória
 		rota := rotas[rand.Intn(len(rotas))]
-
 		log.Printf("[COMPANY %s] Solicitando drone para %s", companyID, rota)
 
 		resposta := requisitarDrone(rota)
@@ -67,21 +137,27 @@ func simularRequisicoes() {
 			log.Printf("[COMPANY %s] Resposta: %s", companyID, resposta)
 		}
 
-		// Verificar saldo periodicamente
-		if rand.Intn(5) == 0 { // 20% das vezes
+		if rand.Intn(5) == 0 {
 			verificarSaldo()
 		}
 	}
 }
 
 func requisitarDrone(rota string) string {
+	leaderAddr, err := descobreLider()
+	if err != nil {
+		log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
+		return ""
+	}
+	url := "http://" + leaderAddr + "/requisitar-drone"
+
 	reqData := map[string]string{
 		"companhia_id": companyID,
 		"rota":         rota,
 	}
 	jsonData, _ := json.Marshal(reqData)
 
-	resp, err := http.Post(brokerURL+"/requisitar-drone", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := doRequestWithRedirect("POST", url, jsonData)
 	if err != nil {
 		log.Printf("[COMPANY %s] Erro na requisição: %v", companyID, err)
 		return ""
@@ -93,23 +169,27 @@ func requisitarDrone(rota string) string {
 		return fmt.Sprintf("Erro ao decodificar resposta: %v", err)
 	}
 
-	// Verificar se houve erro de saldo insuficiente
 	if resp.StatusCode == 402 {
 		log.Printf("[COMPANY %s] Saldo insuficiente! Recarregando...", companyID)
-		recarregarCreditos(100) // Recarrega 100 créditos
+		recarregarCreditos(100)
 	}
 
-	// Extrair informações relevantes
 	status := result["status"]
 	if status == nil {
 		status = result["erro"]
 	}
-
 	return fmt.Sprintf("HTTP %d: %v", resp.StatusCode, status)
 }
 
 func verificarSaldo() {
-	resp, err := http.Get(brokerURL + "/saldo/" + companyID)
+	leaderAddr, err := descobreLider()
+	if err != nil {
+		log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
+		return
+	}
+	url := "http://" + leaderAddr + "/saldo/" + companyID
+
+	resp, err := doRequestWithRedirect("GET", url, nil)
 	if err != nil {
 		log.Printf("[COMPANY %s] Erro ao verificar saldo: %v", companyID, err)
 		return
@@ -124,7 +204,6 @@ func verificarSaldo() {
 
 	if saldo, ok := result["saldo"].(float64); ok {
 		log.Printf("[COMPANY %s] Saldo atual: %.0f créditos", companyID, saldo)
-
 		if saldo < 50 {
 			log.Printf("[COMPANY %s] ⚠️ Saldo baixo (%.0f < 50). Recarregando 200 créditos...", companyID, saldo)
 			recarregarCreditos(200)
@@ -135,13 +214,20 @@ func verificarSaldo() {
 }
 
 func recarregarCreditos(valor int) {
+	leaderAddr, err := descobreLider()
+	if err != nil {
+		log.Printf("[COMPANY %s] ❌ Não foi possível encontrar líder: %v", companyID, err)
+		return
+	}
+	url := "http://" + leaderAddr + "/recarregar"
+
 	reqData := map[string]interface{}{
 		"companhia_id": companyID,
 		"valor":        valor,
 	}
 	jsonData, _ := json.Marshal(reqData)
 
-	resp, err := http.Post(brokerURL+"/recarregar", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := doRequestWithRedirect("POST", url, jsonData)
 	if err != nil {
 		log.Printf("[COMPANY %s] Erro na recarga: %v", companyID, err)
 		return

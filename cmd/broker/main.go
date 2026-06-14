@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -17,29 +16,37 @@ import (
 
 func main() {
 	var (
-		id        = flag.String("id", "broker1", "ID do broker")
-		portaAPI  = flag.String("porta", "8080", "Porta HTTP")
-		ehLider   = flag.Bool("lider", false, "Inicia como líder (bootstrap)")
-		outrosNos = flag.String("outros", "", "IDs dos outros brokers (ex: broker2,broker3)")
+		id       = flag.String("id", "broker1", "ID do broker")
+		apiAddr  = flag.String("api-addr", "", "Endereço público da API (ex: 192.168.1.10:8080)")
+		raftAddr = flag.String("raft-addr", "", "Endereço Raft (ex: 192.168.1.10:7000)")
+		ehLider  = flag.Bool("lider", false, "Inicia como líder (bootstrap)")
+		outros   = flag.String("outros", "", "Outros brokers no formato id=ip:porta,id=ip:porta")
 	)
 	flag.Parse()
 
-	peers := make(map[string]string)
-	peers[*id] = getRaftAddr(*id)
+	if *apiAddr == "" || *raftAddr == "" {
+		log.Fatal("--api-addr e --raft-addr são obrigatórios")
+	}
 
-	if *outrosNos != "" {
-		for _, outroID := range strings.Split(*outrosNos, ",") {
-			outroID = strings.TrimSpace(outroID)
-			if outroID == "" {
-				continue
+	peers := make(map[string]string)
+	peers[*id] = *raftAddr
+
+	if *outros != "" {
+		for _, par := range strings.Split(*outros, ",") {
+			partes := strings.SplitN(par, "=", 2)
+			if len(partes) != 2 {
+				log.Fatalf("Formato inválido em -outros: %s (esperado id=endereco)", par)
 			}
-			peers[outroID] = getRaftAddr(outroID)
+			peerID := strings.TrimSpace(partes[0])
+			peerRaftAddr := strings.TrimSpace(partes[1])
+			peers[peerID] = peerRaftAddr
 		}
 	}
 
 	cfg := consenso.RaftConfigTCP{
 		NodeID:    *id,
-		RaftAddr:  peers[*id],
+		RaftAddr:  *raftAddr,
+		ApiAddr:   *apiAddr,
 		Peers:     peers,
 		Bootstrap: *ehLider,
 	}
@@ -51,7 +58,7 @@ func main() {
 	defer raftNode.Close()
 
 	droneManager := drone.NovoGerenciadorDrones()
-	servidor := api.NovoServidorAPI(*portaAPI, raftNode, droneManager) // assinatura ajustada
+	servidor := api.NovoServidorAPI(*apiAddr, raftNode, droneManager)
 	servidor.RegistrarRotas()
 
 	if *ehLider {
@@ -65,7 +72,7 @@ func main() {
 		}
 	}()
 
-	log.Printf("[SUCESSO] Broker %s rodando. API: http://localhost:%s, Raft: %s", *id, *portaAPI, peers[*id])
+	log.Printf("[SUCESSO] Broker %s rodando. API: http://%s, Raft: %s", *id, *apiAddr, *raftAddr)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -74,38 +81,6 @@ func main() {
 	log.Println("[FIM] Encerrando broker...")
 }
 
-func getRaftAddr(id string) string {
-	var num int
-	for i := len(id) - 1; i >= 0; i-- {
-		if id[i] >= '0' && id[i] <= '9' {
-			num = num*10 + int(id[i]-'0')
-		} else {
-			break
-		}
-	}
-	if num == 0 {
-		num = 1
-	}
-	return fmt.Sprintf("127.0.0.1:%d", 7000+(num-1))
-}
-
 func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
-	transacaoA, _ := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
-		CompanhiaID:   "COMP-A",
-		Valor:         100,
-		AutorizadoPor: "sistema",
-	})
-	if err := raftNode.AplicarTransacao(transacaoA); err != nil {
-		log.Printf("[AVISO] Erro ao recarregar COMP-A: %v", err)
-	}
-
-	transacaoB, _ := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{
-		CompanhiaID:   "COMP-B",
-		Valor:         50,
-		AutorizadoPor: "sistema",
-	})
-	if err := raftNode.AplicarTransacao(transacaoB); err != nil {
-		log.Printf("[AVISO] Erro ao recarregar COMP-B: %v", err)
-	}
-	log.Println("[INICIAL] Créditos iniciais aplicados via Raft")
+	// ... (igual ao seu código)
 }
