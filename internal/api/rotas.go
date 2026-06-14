@@ -91,7 +91,8 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 	}
 
 	// Aplica a transação via Raft
-	if err := s.raftNode.AplicarTransacao(transacao); err != nil {
+	_, err := s.raftNode.AplicarTransacao(transacao)
+	if err != nil {
 		// CORREÇÃO: verifica se a mensagem contém "saldo insuficiente"
 		if strings.Contains(err.Error(), "saldo insuficiente") {
 			return c.Status(402).JSON(fiber.Map{
@@ -153,14 +154,20 @@ func (s *ServidorAPI) recarregarCreditos(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao criar transação"})
 	}
 
-	if err := s.raftNode.AplicarTransacao(transacao); err != nil {
+	novoSaldo, err := s.raftNode.AplicarTransacao(transacao)
+	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"erro": err.Error()})
 	}
-	estado := s.raftNode.ObterEstado()
+
+	// Se por algum motivo o novoSaldo for 0, podemos buscá-lo do estado (fallback)
+	if novoSaldo == 0 {
+		estado := s.raftNode.ObterEstado()
+		novoSaldo = estado.ObterSaldo(req.CompanhiaID)
+	}
 
 	return c.JSON(fiber.Map{
 		"status":     "recarga realizada",
-		"novo_saldo": estado.ObterSaldo(req.CompanhiaID),
+		"novo_saldo": novoSaldo,
 	})
 }
 

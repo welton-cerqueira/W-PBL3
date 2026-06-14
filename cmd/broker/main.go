@@ -89,7 +89,6 @@ func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
 	}
 
 	// Aguarda a presença de pelo menos um peer (além de si mesmo) no cluster
-	// Como não temos um método direto, usamos tentativas com espera
 	log.Println("[INICIAL] Aguardando conexão com seguidores (até 10s)...")
 	time.Sleep(5 * time.Second)
 
@@ -104,7 +103,8 @@ func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
 			log.Printf("[INICIAL] Erro ao criar transação A: %v", err)
 			continue
 		}
-		if err := raftNode.AplicarTransacao(transacaoA); err != nil {
+		// Ignora o novo saldo retornado
+		if _, err := raftNode.AplicarTransacao(transacaoA); err != nil {
 			log.Printf("[INICIAL] Tentativa %d/%d: falha ao recarregar COMP-A: %v", tentativa, maxTentativas, err)
 			time.Sleep(2 * time.Second)
 			continue
@@ -123,7 +123,7 @@ func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
 			log.Printf("[INICIAL] Erro ao criar transação B: %v", err)
 			continue
 		}
-		if err := raftNode.AplicarTransacao(transacaoB); err != nil {
+		if _, err := raftNode.AplicarTransacao(transacaoB); err != nil {
 			log.Printf("[INICIAL] Tentativa %d/%d: falha ao recarregar COMP-B: %v", tentativa, maxTentativas, err)
 			time.Sleep(2 * time.Second)
 			continue

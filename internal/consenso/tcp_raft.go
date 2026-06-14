@@ -332,14 +332,24 @@ func (r *TCPRaft) handleHeartbeat(cmd map[string]interface{}) {
 }
 
 // ------------------ Replicação de comandos ------------------
-func (r *TCPRaft) AplicarTransacao(transacao *Transacao) error {
+// AplicarTransacao aplica uma transação e retorna o novo saldo (se for recarga) ou 0.
+func (r *TCPRaft) AplicarTransacao(transacao *Transacao) (int, error) {
 	if !r.isLeader {
-		return fmt.Errorf("não sou líder, líder é %s (%s)", r.leaderId, r.leaderApiAddr)
+		return 0, fmt.Errorf("não sou líder, líder é %s (%s)", r.leaderId, r.leaderApiAddr)
 	}
 	if err := r.state.AplicarTransacao(transacao); err != nil {
-		return err
+		return 0, err
 	}
 	log.Printf("[RAFT LÍDER %s] 📝 Transação %s aplicada localmente", r.id, transacao.ID)
+
+	// Se for recarga, obtém o novo saldo
+	var novoSaldo int
+	if transacao.Tipo == TipoRecarga {
+		var dados DadosRecarga
+		if err := json.Unmarshal(transacao.Dados, &dados); err == nil {
+			novoSaldo = r.state.ObterSaldo(dados.CompanhiaID)
+		}
+	}
 
 	data, _ := json.Marshal(transacao)
 	cmd := map[string]interface{}{
@@ -362,7 +372,7 @@ func (r *TCPRaft) AplicarTransacao(transacao *Transacao) error {
 		}(id, addr)
 	}
 	log.Printf("[RAFT LÍDER %s] 📡 Transação %s enviada para %d seguidores", r.id, transacao.ID, len(r.peers)-1)
-	return nil
+	return novoSaldo, nil
 }
 
 func (r *TCPRaft) sendAppend(targetAddr, cmd string) error {
@@ -450,6 +460,8 @@ func (r *TCPRaft) sendSnapshot(peerAddr string) {
 }
 
 func (r *TCPRaft) ObterEstado() *EstadoLedger {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return r.state
 }
 
