@@ -47,6 +47,10 @@ type DadosPagamento struct {
 	Valor           int    `json:"valor"`
 	Motivo          string `json:"motivo"`
 	IDRequisicao    string `json:"id_requisicao,omitempty"`
+	Timestamp       int64  `json:"timestamp,omitempty"`
+	Nonce           string `json:"nonce,omitempty"`
+	ChavePublica    string `json:"chave_publica,omitempty"`
+	Assinatura      string `json:"assinatura,omitempty"`
 }
 
 // DadosRecarga estrutura para transações de recarga de créditos
@@ -68,4 +72,6 @@ type DadosLaudo struct {
 	DataHoraFim    int64    `json:"data_hora_fim"`
 	Hash           string   `json:"hash"`          // Hash do laudo
 	HashAnterior   string   `json:"hash_anterior"` // Hash do laudo anterior
+	ChavePublica   string   `json:"chave_publica,omitempty"`
+	Assinatura     string   `json:"assinatura,omitempty"`
 }

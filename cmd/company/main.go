@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -13,6 +14,10 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"W-PBL3/internal/crypto" // seu pacote
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -21,6 +26,7 @@ var (
 	brokers       map[string]string
 	rotas         = []string{"Rota Norte", "Rota Sul", "Rota Leste", "Rota Oeste", "Rota Central"}
 	ultimaRecarga time.Time
+	privKey       *ecdsa.PrivateKey
 )
 
 func main() {
@@ -44,19 +50,24 @@ func main() {
 		log.Fatal("Nenhum broker válido fornecido")
 	}
 
+	// Gerar par de chaves (após validação)
+	var err error
+	privKey, _, err = crypto.GerarParChaves()
+	if err != nil {
+		log.Fatalf("[COMPANY %s] Erro ao gerar chaves: %v", companyID, err)
+	}
+	log.Printf("[COMPANY %s] Par de chaves gerado com sucesso", companyID)
+
 	log.Printf("[COMPANY %s] Iniciando simulador autônomo...", companyID)
 
 	// Aguardar brokers iniciarem
 	time.Sleep(5 * time.Second)
 
-	// Simular comportamento da companhia
 	go simularRequisicoes()
 
-	// Aguardar sinal de término
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
-
 	log.Printf("[COMPANY %s] Encerrando...", companyID)
 }
 
@@ -163,9 +174,27 @@ func requisitarDrone(rota string) string {
 		}
 		url := "http://" + leaderAddr + "/requisitar-drone"
 
-		reqData := map[string]string{
-			"companhia_id": companyID,
-			"rota":         rota,
+		timestamp := time.Now().Unix()
+		nonce := uuid.New().String()
+		dadosStr := fmt.Sprintf("%s:%s:%d:%s", companyID, rota, timestamp, nonce)
+		assinatura, err := crypto.Assinar(privKey, []byte(dadosStr))
+		if err != nil {
+			log.Printf("[COMPANY %s] Erro ao assinar: %v", companyID, err)
+			return ""
+		}
+		chavePublica, err := crypto.ExportarChavePublicaBase64(&privKey.PublicKey)
+		if err != nil {
+			log.Printf("[COMPANY %s] Erro ao exportar chave pública: %v", companyID, err)
+			return ""
+		}
+
+		reqData := map[string]interface{}{
+			"companhia_id":  companyID,
+			"rota":          rota,
+			"timestamp":     timestamp,
+			"nonce":         nonce,
+			"chave_publica": chavePublica,
+			"assinatura":    assinatura,
 		}
 		jsonData, _ := json.Marshal(reqData)
 
@@ -181,11 +210,9 @@ func requisitarDrone(rota string) string {
 			return fmt.Sprintf("Erro ao decodificar resposta: %v", err)
 		}
 
-		// Se saldo insuficiente e é a primeira tentativa, recarrega e tenta novamente
 		if resp.StatusCode == 402 && tentativa == 1 {
 			log.Printf("[COMPANY %s] Saldo insuficiente! Recarregando e tentando novamente...", companyID)
 			recarregarCreditos(100)
-			// Aguarda a recarga ser aplicada e replicada
 			time.Sleep(1 * time.Second)
 			continue
 		}

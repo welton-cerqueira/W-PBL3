@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"W-PBL3/internal/consenso"
+	"W-PBL3/internal/crypto"
 	"W-PBL3/pkg/modelos"
 
 	"github.com/gofiber/fiber/v2"
@@ -57,8 +58,12 @@ func (s *ServidorAPI) listarMissoes(c *fiber.Ctx) error {
 // requisitarDrone é o endpoint principal para companhias solicitarem drones
 func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 	var req struct {
-		CompanhiaID string `json:"companhia_id"`
-		Rota        string `json:"rota"`
+		CompanhiaID  string `json:"companhia_id"`
+		Rota         string `json:"rota"`
+		Timestamp    int64  `json:"timestamp"`
+		Nonce        string `json:"nonce"`
+		ChavePublica string `json:"chave_publica"`
+		Assinatura   string `json:"assinatura"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -73,6 +78,16 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		})
 	}
 
+	// --- Verificação da assinatura digital da companhia ---
+	dadosStr := fmt.Sprintf("%s:%s:%d:%s", req.CompanhiaID, req.Rota, req.Timestamp, req.Nonce)
+	chavePub, err := crypto.ImportarChavePublicaBase64(req.ChavePublica)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"erro": "Chave pública inválida"})
+	}
+	if !crypto.Verificar(chavePub, []byte(dadosStr), req.Assinatura) {
+		return c.Status(401).JSON(fiber.Map{"erro": "Assinatura inválida"})
+	}
+
 	// Cria requisição
 	requisicao := modelos.NovaRequisicaoEscolta(req.CompanhiaID, req.Rota)
 
@@ -83,6 +98,10 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		Valor:           10,
 		Motivo:          "requisicao_drone",
 		IDRequisicao:    requisicao.IDRequisicao,
+		Timestamp:       req.Timestamp,
+		Nonce:           req.Nonce,
+		ChavePublica:    req.ChavePublica,
+		Assinatura:      req.Assinatura,
 	}
 
 	transacao, err := consenso.NovaTransacao(consenso.TipoPagamento, dadosPagamento)
@@ -92,7 +111,6 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 
 	// Aplica a transação via Raft
 	if _, err := s.raftNode.AplicarTransacao(transacao); err != nil {
-		// CORREÇÃO: verifica se a mensagem contém "saldo insuficiente"
 		if strings.Contains(err.Error(), "saldo insuficiente") {
 			return c.Status(402).JSON(fiber.Map{
 				"erro":   "Saldo insuficiente",
@@ -180,6 +198,27 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 	log.Printf("[LAUDO] Recebido laudo para missão: %s", laudo.IDRequisicao)
 	log.Printf("[LAUDO] Drone: %s, Resultado: %s", laudo.DroneID, laudo.Resultado)
 
+	// ===== VERIFICAÇÃO DE ASSINATURA =====
+	dadosStr := fmt.Sprintf("%s:%s:%s:%s:%d:%d:%s",
+		laudo.IDRequisicao,
+		laudo.DroneID,
+		laudo.Rota,
+		laudo.Resultado,
+		laudo.DataHoraInicio,
+		laudo.DataHoraFim,
+		laudo.HashAnterior,
+	)
+	chavePub, err := crypto.ImportarChavePublicaBase64(laudo.ChavePublica)
+	if err != nil {
+		log.Printf("[LAUDO] Chave pública inválida para missão %s: %v", laudo.IDRequisicao, err)
+		return c.Status(401).JSON(fiber.Map{"erro": "Chave pública inválida"})
+	}
+	if !crypto.Verificar(chavePub, []byte(dadosStr), laudo.Assinatura) {
+		log.Printf("[LAUDO] Assinatura inválida para missão %s", laudo.IDRequisicao)
+		return c.Status(401).JSON(fiber.Map{"erro": "Assinatura inválida"})
+	}
+	// =====================================
+
 	if !s.raftNode.EhLider() {
 		return c.Status(503).JSON(fiber.Map{
 			"erro":  "Este não é o nó líder",
@@ -194,7 +233,7 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		log.Printf("[LAUDO] ⚠️ Laudo sem companhia_id para missão %s", laudo.IDRequisicao)
 	}
 
-	// Registra o laudo como transação no ledger
+	// Registra o laudo como transação no ledger (inclui os campos de assinatura, se desejar)
 	dadosLaudo := consenso.DadosLaudo{
 		IDRequisicao:   laudo.IDRequisicao,
 		DroneID:        laudo.DroneID,
@@ -206,6 +245,8 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		DataHoraFim:    laudo.DataHoraFim,
 		Hash:           laudo.HashVerificacao,
 		HashAnterior:   laudo.HashAnterior,
+		ChavePublica:   laudo.ChavePublica,
+		Assinatura:     laudo.Assinatura,
 	}
 
 	transacao, err := consenso.NovaTransacao(consenso.TipoLaudo, dadosLaudo)

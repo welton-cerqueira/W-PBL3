@@ -25,6 +25,8 @@ type LaudoMissao struct {
 	DataHoraFim     int64    `json:"data_hora_fim"`
 	HashAnterior    string   `json:"hash_anterior"`
 	HashVerificacao string   `json:"hash_verificacao"`
+	ChavePublica    string   `json:"chave_publica,omitempty"`
+	Assinatura      string   `json:"assinatura,omitempty"`
 }
 
 // NovoLaudoMissao cria um novo laudo de missão
