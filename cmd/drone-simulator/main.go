@@ -1,7 +1,9 @@
 package main
 
 import (
+	"W-PBL3/internal/crypto"
 	"bytes"
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -29,6 +31,7 @@ var (
 	ultimoLiderAddr      string // armazena o último líder conhecido
 	missaoAtualCompanhia string
 	ultimoHash           string
+	dronePrivKey         *ecdsa.PrivateKey
 )
 
 func main() {
@@ -36,6 +39,13 @@ func main() {
 	flag.StringVar(&addr, "addr", "", "Endereço completo do drone (ex: 192.168.1.20:9001)")
 	flag.StringVar(&brokerList, "brokers", "", "Lista de brokers (ex: broker1=192.168.1.10:8080,broker2=...)")
 	flag.Parse()
+
+	var err error
+	dronePrivKey, _, err = crypto.GerarParChaves()
+	if err != nil {
+		log.Fatalf("[DRONE %s] Erro ao gerar chaves: %v", droneID, err)
+	}
+	log.Printf("[DRONE %s] Par de chaves gerado com sucesso", droneID)
 
 	if droneID == "" || addr == "" || brokerList == "" {
 		log.Fatal("Flags -id, -addr e -brokers são obrigatórias")
@@ -275,7 +285,32 @@ func enviarLaudo() {
 	// Usa o último hash registrado como hash_anterior
 	hashAnterior := ultimoHash
 
-	// Prepara o laudo com os dados (ainda sem hash_verificacao real)
+	// --- Assinatura digital ---
+	// Dados a serem assinados (mesma ordem usada na verificação pelo broker)
+	dadosStr := fmt.Sprintf("%s:%s:%s:%s:%d:%d:%s",
+		missaoAtual,
+		droneID,
+		rotaAtual,
+		resultado,
+		inicio,
+		fim,
+		hashAnterior,
+	)
+
+	assinatura, err := crypto.Assinar(dronePrivKey, []byte(dadosStr))
+	if err != nil {
+		log.Printf("[DRONE %s] Erro ao assinar laudo: %v", droneID, err)
+		return
+	}
+
+	chavePublica, err := crypto.ExportarChavePublicaBase64(&dronePrivKey.PublicKey)
+	if err != nil {
+		log.Printf("[DRONE %s] Erro ao exportar chave pública: %v", droneID, err)
+		return
+	}
+	// -------------------------
+
+	// Prepara o laudo com os dados (inclui campos de assinatura)
 	laudo := map[string]interface{}{
 		"id_requisicao":    missaoAtual,
 		"drone_id":         droneID,
@@ -288,9 +323,11 @@ func enviarLaudo() {
 		"data_hora_fim":    fim,
 		"hash_anterior":    hashAnterior,
 		"hash_verificacao": "", // será preenchido após cálculo
+		"chave_publica":    chavePublica,
+		"assinatura":       assinatura,
 	}
 
-	// Calcula o hash SHA256 do laudo (inclui todos os campos, inclusive hash_anterior)
+	// Calcula o hash SHA256 do laudo completo (incluindo chave_publica e assinatura)
 	laudoJSON, _ := json.Marshal(laudo)
 	hash := sha256.Sum256(laudoJSON)
 	hashReal := hex.EncodeToString(hash[:])
