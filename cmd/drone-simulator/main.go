@@ -337,6 +337,7 @@ func enviarLaudo() {
 	}
 
 	// Calcula o hash SHA256 do laudo completo (incluindo chave_publica e assinatura)
+	//Esse algoritmo processa os bytes e devolve um array fixo de 32 bytes (um código matemático único gerado a partir daquele conteúdo).
 	laudoJSON, _ := json.Marshal(laudo)
 	hash := sha256.Sum256(laudoJSON)
 	hashReal := hex.EncodeToString(hash[:])

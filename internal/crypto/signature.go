@@ -25,7 +25,7 @@ func GerarParChaves() (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
 }
 
 // Assinar dados com chave privada, retorna assinatura em base64 (formato ASN.1 DER)
-// Serve para o drone aplicar o seu "carimbo digital" em um relatório de missão antes de enviá-lo para a rede.
+// Serve para o drone e a companhia aplicar o seu "carimbo digital" em um relatório de missão antes de enviá-lo para a rede.
 func Assinar(priv *ecdsa.PrivateKey, dados []byte) (string, error) {
 	hash := sha256.Sum256(dados)
 	sig, err := ecdsa.SignASN1(rand.Reader, priv, hash[:])

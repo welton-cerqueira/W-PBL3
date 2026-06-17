@@ -63,6 +63,9 @@ func (e *EstadoLedger) AplicarTransacao(transacao *Transacao) error {
 		e.Saldos[dados.DeCompanhiaID] -= dados.Valor
 		e.Saldos[dados.ParaCompanhiaID] += dados.Valor
 
+		log.Printf("[PAGAMENTO] Pagamento feito por -> %s: %d para -> %s: %d",
+			dados.DeCompanhiaID, e.Saldos[dados.DeCompanhiaID], dados.ParaCompanhiaID, e.Saldos[dados.ParaCompanhiaID])
+
 		// Carimba o status da missão como "pago"
 		if dados.IDRequisicao != "" {
 			e.Missoes[dados.IDRequisicao] = "pago"

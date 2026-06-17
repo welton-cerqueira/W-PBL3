@@ -131,10 +131,12 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		})
 	}
 
+	//Atualiza a requisição com dados do drone alocado
 	requisicao.DroneID = droneID
 	requisicao.Status = modelos.StatusAprovada
 	estado := s.raftNode.ObterEstado()
 
+	//notifica o drone para iniciar a missão
 	go s.notificarDrone(droneID, requisicao.IDRequisicao, req.Rota, req.CompanhiaID)
 
 	return c.JSON(fiber.Map{

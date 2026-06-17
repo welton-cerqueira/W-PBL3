@@ -127,6 +127,7 @@ func (r *TCPRaft) tryJoin() {
 		}
 		msg := fmt.Sprintf(`{"type":"join","nodeId":"%s","nodeAddr":"%s","apiAddr":"%s"}`, r.id, r.addr, r.apiAddr)
 		fmt.Fprintf(conn, "%s\n", msg)
+
 		buf := make([]byte, 2)
 		n, _ := conn.Read(buf)
 		conn.Close()
@@ -421,7 +422,7 @@ func (r *TCPRaft) handleAppend(cmd map[string]interface{}) {
 }
 
 // ------------------ Join ------------------
-
+// Recebe dados de conexã de outros brokers para se conectar ao cruster e encaminha
 func (r *TCPRaft) handleJoin(cmd map[string]interface{}, conn net.Conn) {
 	nodeId, _ := cmd["nodeId"].(string)
 	nodeRaftAddr, _ := cmd["nodeAddr"].(string)
@@ -433,6 +434,7 @@ func (r *TCPRaft) handleJoin(cmd map[string]interface{}, conn net.Conn) {
 	fmt.Fprintf(conn, "ok\n")
 }
 
+// RPega transações já feitas e replica para novos brokers que se juntaram ao cruster
 func (r *TCPRaft) handleSnapshot(cmd map[string]interface{}) {
 	dataStr, _ := cmd["data"].(string)
 	if dataStr == "" {
@@ -456,6 +458,7 @@ func (r *TCPRaft) handleSnapshot(cmd map[string]interface{}) {
 	log.Printf("[RAFT SEGUIDOR %s] ✅ Snapshot restaurado com %d transações", r.id, len(historico))
 }
 
+// Obtém o histórico de transações e envia pela conexão tcp
 func (r *TCPRaft) sendSnapshot(peerAddr string) {
 	historico := r.state.ObterHistorico()
 	data, err := json.Marshal(historico)

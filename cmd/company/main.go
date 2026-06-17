@@ -56,8 +56,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("[COMPANY %s] Erro ao gerar chaves: %v", companyID, err)
 	}
-	log.Printf("[COMPANY %s] Par de chaves gerado com sucesso", companyID)
 
+	log.Printf("[COMPANY %s] Par de chaves gerado com sucesso", companyID)
 	log.Printf("[COMPANY %s] Iniciando simulador autônomo...", companyID)
 
 	// Aguardar brokers iniciarem
