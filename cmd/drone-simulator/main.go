@@ -126,13 +126,16 @@ func descobreLider() (string, error) {
 	return "", fmt.Errorf("não foi possível determinar o líder")
 }
 
+// Envia uma requisição HTTP, seguindo redirecionamentos e redescobrindo o líder se necessário
 func doRequestWithRedirect(method, url string, body []byte) (*http.Response, error) {
 	maxTentativas := 5
 	for i := 0; i < maxTentativas; i++ {
+		//cria o pacote HTTP
 		req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 		if err != nil {
 			return nil, err
 		}
+		//Se o Broker mandar eu mudar de endereço, pare! Não siga sozinho
 		req.Header.Set("Content-Type", "application/json")
 		client := &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -180,6 +183,7 @@ func registrarNoBroker() {
 		log.Printf("[DRONE %s] ❌ Não foi possível encontrar líder: %v", droneID, err)
 		return
 	}
+	//monta o endereço exato da web onde fica o guichê de registros do líder (/drone/registrar)
 	registrarURL := "http://" + leaderAddr + "/drone/registrar"
 	reqData := map[string]string{
 		"drone_id": droneID,
@@ -193,6 +197,8 @@ func registrarNoBroker() {
 		return
 	}
 	defer resp.Body.Close()
+
+	//Lendo a resposta do Líder (Sucesso ou Recusa)
 	if resp.StatusCode == http.StatusOK {
 		log.Printf("[DRONE %s] ✅ Registrado com sucesso no líder %s", droneID, leaderAddr)
 		registrado = true
@@ -202,7 +208,9 @@ func registrarNoBroker() {
 	}
 }
 
+// Permite que drone receba ordens vindas do broker
 func iniciarServidorHTTP() {
+	//Se alguém vier na rede e chamar pelo caminho /iniciar-missao, execute o código que está aqui dentro
 	http.HandleFunc("/iniciar-missao", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			IDRequisicao string `json:"id_requisicao"`
@@ -221,7 +229,7 @@ func iniciarServidorHTTP() {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "missão iniciada"})
 	})
-
+	//serve para o Broker saber que o drone está ligado e não travou
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "drone": droneID})
@@ -231,6 +239,7 @@ func iniciarServidorHTTP() {
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
+// Simula uma missão executada pelo drone
 func executarMissaoReal(idRequisicao, rota string) {
 	if emMissao {
 		log.Printf("[DRONE %s] ⚠️ Já em missão, ignorando nova missão %s", droneID, idRequisicao)
@@ -240,7 +249,7 @@ func executarMissaoReal(idRequisicao, rota string) {
 	missaoAtual = idRequisicao
 	rotaAtual = rota
 
-	log.Printf("[DRONE %s] ✈️ Executando missão REAL %s na rota %s...", droneID, missaoAtual, rotaAtual)
+	log.Printf("[DRONE %s] ✈️ Executando missão %s na rota %s...", droneID, missaoAtual, rotaAtual)
 	tempoVoo := time.Duration(5+rand.Intn(10)) * time.Second
 	time.Sleep(tempoVoo)
 
@@ -371,18 +380,4 @@ func enviarLaudo() {
 	emMissao = false
 	missaoAtual = ""
 	rotaAtual = ""
-}
-
-func gerarHash(s string) string {
-	if len(s) < 8 {
-		return "hash_" + time.Now().Format("150405") + "_" + s
-	}
-	return "hash_" + time.Now().Format("150405") + "_" + s[:8]
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

@@ -68,31 +68,6 @@ func NewTCPRaft(cfg RaftConfigTCP) (*TCPRaft, error) {
 	return r, nil
 }
 
-// tryJoin tenta se juntar ao cluster enviando um comando "join" para qualquer peer conhecido
-func (r *TCPRaft) tryJoin() {
-	for id, addr := range r.peers {
-		if id == r.id {
-			continue
-		}
-		conn, err := net.Dial("tcp", addr)
-		if err != nil {
-			log.Printf("[RAFT %s] Falha ao conectar para join em %s: %v", r.id, addr, err)
-			continue
-		}
-		msg := fmt.Sprintf(`{"type":"join","nodeId":"%s","nodeAddr":"%s","apiAddr":"%s"}`, r.id, r.addr, r.apiAddr)
-		fmt.Fprintf(conn, "%s\n", msg)
-		buf := make([]byte, 2)
-		n, _ := conn.Read(buf)
-		conn.Close()
-		if n >= 2 && string(buf[:2]) == "ok" {
-			log.Printf("[RAFT %s] ✅ Juntou-se ao cluster via %s (%s)", r.id, id, addr)
-			return
-		}
-	}
-	log.Printf("[RAFT %s] ⚠️ Não conseguiu se juntar a nenhum peer. Tentará novamente em 5s.", r.id)
-	time.AfterFunc(5*time.Second, r.tryJoin)
-}
-
 func (r *TCPRaft) startTCPServer() {
 	ln, err := net.Listen("tcp", r.addr)
 	if err != nil {
@@ -113,6 +88,7 @@ func (r *TCPRaft) startTCPServer() {
 	}
 }
 
+// Fica em loop aceitando conexões TCP brutas de outros corretores
 func (r *TCPRaft) handleConnection(conn net.Conn) {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
@@ -138,7 +114,34 @@ func (r *TCPRaft) handleConnection(conn net.Conn) {
 	}
 }
 
+// tryJoin tenta se juntar ao cluster enviando um comando "join" para qualquer peer conhecido
+func (r *TCPRaft) tryJoin() {
+	for id, addr := range r.peers {
+		if id == r.id {
+			continue
+		}
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			log.Printf("[RAFT %s] Falha ao conectar para join em %s: %v", r.id, addr, err)
+			continue
+		}
+		msg := fmt.Sprintf(`{"type":"join","nodeId":"%s","nodeAddr":"%s","apiAddr":"%s"}`, r.id, r.addr, r.apiAddr)
+		fmt.Fprintf(conn, "%s\n", msg)
+		buf := make([]byte, 2)
+		n, _ := conn.Read(buf)
+		conn.Close()
+		if n >= 2 && string(buf[:2]) == "ok" {
+			log.Printf("[RAFT %s] ✅ Juntou-se ao cluster via %s (%s)", r.id, id, addr)
+			return
+		}
+	}
+	log.Printf("[RAFT %s] ⚠️ Não conseguiu se juntar a nenhum peer. Tentará novamente em 5s.", r.id)
+	time.AfterFunc(5*time.Second, r.tryJoin)
+}
+
 // ------------------ Eleição ------------------
+
+// função de campanha eleitoral que vota num novo lider após a queda do broker lider
 func (r *TCPRaft) campaign() {
 	time.Sleep(2 * time.Second)
 	for {
@@ -152,6 +155,7 @@ func (r *TCPRaft) campaign() {
 		leaderExists := (r.leaderId != "")
 		r.mu.Unlock()
 
+		//calcula quanto tempo se passou desde o último sinal de vida do líder
 		if leaderExists && time.Since(lastHb) > 2*time.Second {
 			r.mu.Lock()
 			log.Printf("[RAFT %s] Líder %s falhou (timeout), iniciando eleição", r.id, r.leaderId)
@@ -204,6 +208,7 @@ func (r *TCPRaft) campaign() {
 	}
 }
 
+// Realiza requisição de votos e recebe os votos de volta
 func (r *TCPRaft) requestVote(targetAddr string, termo int) bool {
 	conn, err := net.DialTimeout("tcp", targetAddr, 1*time.Second)
 	if err != nil {
@@ -232,6 +237,7 @@ func (r *TCPRaft) requestVote(targetAddr string, termo int) bool {
 	return false
 }
 
+// Outros brokers fazem suas votações aqui
 func (r *TCPRaft) handleVote(cmd map[string]interface{}, conn net.Conn) {
 	candidate, _ := cmd["candidate"].(string)
 	termo, _ := cmd["term"].(float64)
@@ -241,12 +247,16 @@ func (r *TCPRaft) handleVote(cmd map[string]interface{}, conn net.Conn) {
 	defer r.mu.Unlock()
 
 	granted := false
+	//Se o broker atual tiver com a versão menor que a do broker solicitante
+	// E se ele achava que ele era o lider, ele deixa de ser
 	if termoInt > r.currentTerm {
 		r.currentTerm = termoInt
 		r.votedFor = ""
 		r.isLeader = false
 		r.leaderId = ""
 	}
+
+	//Caso o broker que requisitou passe pelas condições, o broker atual concede o voto para ele
 	if (r.votedFor == "" || r.votedFor == candidate) && termoInt >= r.currentTerm {
 		r.votedFor = candidate
 		granted = true
@@ -261,6 +271,8 @@ func (r *TCPRaft) handleVote(cmd map[string]interface{}, conn net.Conn) {
 }
 
 // ------------------ Heartbeat ------------------
+
+// Itera sobre os brokers para enviar batimentos a cada 1 segundo (Somente lider)
 func (r *TCPRaft) sendHeartbeats() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -288,6 +300,7 @@ func (r *TCPRaft) sendHeartbeats() {
 	}
 }
 
+// Envia batimentos na rede ATRAVÉS do tcp
 func (r *TCPRaft) sendHeartbeat(targetAddr string) {
 	conn, err := net.DialTimeout("tcp", targetAddr, 500*time.Millisecond)
 	if err != nil {
@@ -310,6 +323,7 @@ func (r *TCPRaft) sendHeartbeat(targetAddr string) {
 	fmt.Fprintf(conn, "%s\n", data)
 }
 
+// Limpa dados de brokers seguidores depois de uma votação e atualiza leader
 func (r *TCPRaft) handleHeartbeat(cmd map[string]interface{}) {
 	leaderId, _ := cmd["leader"].(string)
 	leaderRaftAddr, _ := cmd["leaderRaftAddr"].(string)
@@ -337,6 +351,7 @@ func (r *TCPRaft) AplicarTransacao(transacao *Transacao) (int, error) {
 	if !r.isLeader {
 		return 0, fmt.Errorf("não sou líder, líder é %s (%s)", r.leaderId, r.leaderApiAddr)
 	}
+	//aplica uma transação ao estado
 	if err := r.state.AplicarTransacao(transacao); err != nil {
 		return 0, err
 	}
@@ -353,7 +368,7 @@ func (r *TCPRaft) AplicarTransacao(transacao *Transacao) (int, error) {
 
 	data, _ := json.Marshal(transacao)
 	cmd := map[string]interface{}{
-		"type": "append",
+		"type": "append", //comando append significa "acrescente isso ai ao final do seu livro"
 		"data": string(data),
 	}
 	cmdJSON, _ := json.Marshal(cmd)
@@ -375,6 +390,7 @@ func (r *TCPRaft) AplicarTransacao(transacao *Transacao) (int, error) {
 	return novoSaldo, nil
 }
 
+// Replica transaçã para todoso os brokers não lider
 func (r *TCPRaft) sendAppend(targetAddr, cmd string) error {
 	conn, err := net.DialTimeout("tcp", targetAddr, 500*time.Millisecond)
 	if err != nil {
@@ -385,6 +401,7 @@ func (r *TCPRaft) sendAppend(targetAddr, cmd string) error {
 	return err
 }
 
+// Brokers seguidores replicam a transação no seu próprio Ledger
 func (r *TCPRaft) handleAppend(cmd map[string]interface{}) {
 	dataStr, ok := cmd["data"].(string)
 	if !ok {
@@ -404,6 +421,7 @@ func (r *TCPRaft) handleAppend(cmd map[string]interface{}) {
 }
 
 // ------------------ Join ------------------
+
 func (r *TCPRaft) handleJoin(cmd map[string]interface{}, conn net.Conn) {
 	nodeId, _ := cmd["nodeId"].(string)
 	nodeRaftAddr, _ := cmd["nodeAddr"].(string)

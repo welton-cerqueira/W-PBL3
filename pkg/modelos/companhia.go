@@ -43,7 +43,7 @@ const (
 // NovaRequisicaoEscolta cria uma nova requisição com ID automático
 func NovaRequisicaoEscolta(companhiaID, rota string) *RequisicaoEscolta {
 	return &RequisicaoEscolta{
-		IDRequisicao: uuid.New().String(), // Agora usando uuid de verdade
+		IDRequisicao: uuid.New().String(),
 		CompanhiaID:  companhiaID,
 		Rota:         rota,
 		Timestamp:    time.Now().Unix(),

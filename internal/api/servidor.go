@@ -12,15 +12,15 @@ import (
 )
 
 type ServidorAPI struct {
-	app   *fiber.App
-	porta string
-	// estado removido – agora obtém via raftNode.ObterEstado()
+	app          *fiber.App
+	porta        string
 	raftNode     *consenso.TCPRaft
 	droneManager *drone.GerenciadorDrones
 	drones       map[string]string
 	dronesMu     sync.RWMutex
 }
 
+// Preenche a struct ServidorAPI
 func NovoServidorAPI(porta string, raftNode *consenso.TCPRaft, droneManager *drone.GerenciadorDrones) *ServidorAPI {
 	app := fiber.New(fiber.Config{
 		ServerHeader: "W-PBL3",

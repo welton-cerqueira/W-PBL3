@@ -76,7 +76,6 @@ func (g *GerenciadorDrones) LiberarDrone(droneID string) {
 
 		drone.Status = "disponivel"
 		drone.MissaoAtual = ""
-		log.Printf("[DRONE] Drone %s liberado e disponível novamente", droneID)
 	}
 }
 

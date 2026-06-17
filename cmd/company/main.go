@@ -96,7 +96,7 @@ func descobreLider() (string, error) {
 	return "", fmt.Errorf("não foi possível determinar o líder")
 }
 
-// doRequestWithRedirect envia uma requisição HTTP, seguindo redirecionamentos e redescobrindo o líder se necessário
+// Envia uma requisição HTTP, seguindo redirecionamentos e redescobrindo o líder se necessário
 func doRequestWithRedirect(method, url string, body []byte) (*http.Response, error) {
 	maxTentativas := 5
 	for i := 0; i < maxTentativas; i++ {
@@ -104,6 +104,7 @@ func doRequestWithRedirect(method, url string, body []byte) (*http.Response, err
 		if err != nil {
 			return nil, err
 		}
+		//Se o Broker mandar eu mudar de endereço, pare! Não siga sozinho
 		req.Header.Set("Content-Type", "application/json")
 		client := &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {

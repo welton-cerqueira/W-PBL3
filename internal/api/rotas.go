@@ -88,7 +88,7 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"erro": "Assinatura inválida"})
 	}
 
-	// Cria requisição
+	// Cria requisição com ID único
 	requisicao := modelos.NovaRequisicaoEscolta(req.CompanhiaID, req.Rota)
 
 	// Cria transação de pagamento (custo fixo de 10 créditos)
@@ -104,6 +104,7 @@ func (s *ServidorAPI) requisitarDrone(c *fiber.Ctx) error {
 		Assinatura:      req.Assinatura,
 	}
 
+	//cria uma nova transação com ID único
 	transacao, err := consenso.NovaTransacao(consenso.TipoPagamento, dadosPagamento)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao criar transação"})
@@ -195,8 +196,7 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"erro": "Laudo inválido: " + err.Error()})
 	}
 
-	log.Printf("[LAUDO] Recebido laudo para missão: %s", laudo.IDRequisicao)
-	log.Printf("[LAUDO] Drone: %s, Resultado: %s", laudo.DroneID, laudo.Resultado)
+	log.Printf("[LAUDO] Broker Líder recebeu laudo para missão: %s", laudo.IDRequisicao)
 
 	// ===== VERIFICAÇÃO DE ASSINATURA =====
 	dadosStr := fmt.Sprintf("%s:%s:%s:%s:%d:%d:%s",
@@ -217,8 +217,8 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		log.Printf("[LAUDO] Assinatura inválida para missão %s", laudo.IDRequisicao)
 		return c.Status(401).JSON(fiber.Map{"erro": "Assinatura inválida"})
 	}
-	// =====================================
 
+	// =====================================
 	if !s.raftNode.EhLider() {
 		return c.Status(503).JSON(fiber.Map{
 			"erro":  "Este não é o nó líder",
@@ -233,7 +233,7 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		log.Printf("[LAUDO] ⚠️ Laudo sem companhia_id para missão %s", laudo.IDRequisicao)
 	}
 
-	// Registra o laudo como transação no ledger (inclui os campos de assinatura, se desejar)
+	// Registra o laudo como transação no ledger
 	dadosLaudo := consenso.DadosLaudo{
 		IDRequisicao:   laudo.IDRequisicao,
 		DroneID:        laudo.DroneID,
@@ -248,19 +248,20 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 		ChavePublica:   laudo.ChavePublica,
 		Assinatura:     laudo.Assinatura,
 	}
-
+	//registrar o laudo no histórico imutável
 	transacao, err := consenso.NovaTransacao(consenso.TipoLaudo, dadosLaudo)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao criar transação: " + err.Error()})
 	}
 
+	//Replico a transação para os outros brokers
 	if _, err := s.raftNode.AplicarTransacao(transacao); err != nil {
 		return c.Status(500).JSON(fiber.Map{"erro": "Erro ao aplicar transação: " + err.Error()})
 	}
 
 	// Libera o drone
 	s.droneManager.LiberarDrone(laudo.DroneID)
-	log.Printf("[DRONE] Drone %s liberado após missão %s", laudo.DroneID, laudo.IDRequisicao)
+	log.Printf("[DRONE] %s liberado após missão %s:", laudo.DroneID, laudo.IDRequisicao)
 
 	estado := s.raftNode.ObterEstado()
 	saldo := estado.ObterSaldo(companhiaID)
@@ -296,7 +297,6 @@ func (s *ServidorAPI) relatarMissao(c *fiber.Ctx) error {
 
 // registrarDrone registra um drone no sistema
 // NOTA: Em ambiente distribuído, o drone deve enviar seu endereço completo (ex: "192.168.1.20:9001")
-// no campo "addr". Atualmente o campo "porta" é usado, mas deve ser substituído por "addr".
 func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 	var req struct {
 		DroneID string `json:"drone_id"`
@@ -320,7 +320,6 @@ func (s *ServidorAPI) registrarDrone(c *fiber.Ctx) error {
 }
 
 // notificarDrone via HTTP
-// ATENÇÃO: Esta função ainda assume que o drone está em "localhost". Para funcionar em rede,
 // o drone deve fornecer seu endereço IP completo no registro, e este endereço deve ser usado aqui.
 func (s *ServidorAPI) notificarDrone(droneID, idRequisicao, rota, companhiaID string) {
 	s.dronesMu.RLock()

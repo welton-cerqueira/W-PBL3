@@ -17,9 +17,9 @@ import (
 func main() {
 	var (
 		id       = flag.String("id", "broker1", "ID do broker")
-		apiAddr  = flag.String("api-addr", "", "Endereço público da API (ex: 192.168.1.10:8080)")
-		raftAddr = flag.String("raft-addr", "", "Endereço Raft (ex: 192.168.1.10:7000)")
-		ehLider  = flag.Bool("lider", false, "Inicia como líder (bootstrap)")
+		apiAddr  = flag.String("api-addr", "", "Endereço público da API (ex: 192.168.1.10:8080)") //(IP e Porta) onde o servidor web (Fiber) vai rodar
+		raftAddr = flag.String("raft-addr", "", "Endereço Raft (ex: 192.168.1.10:7000)")          //Endereço onde roda o consenso Raft
+		ehLider  = flag.Bool("lider", false, "Inicia como líder (bootstrap)")                     //Um valor verdadeiro ou falso (true ou false)
 		outros   = flag.String("outros", "", "Outros brokers no formato id=ip:porta,id=ip:porta")
 	)
 	flag.Parse()
@@ -89,9 +89,11 @@ func aplicarCreditosIniciais(raftNode *consenso.TCPRaft) {
 	}
 
 	// Aguarda a presença de pelo menos um peer (além de si mesmo) no cluster
-	log.Println("[INICIAL] Aguardando conexão com seguidores (até 10s)...")
-	time.Sleep(5 * time.Second)
+	log.Println("[INICIAL] Aguardando conexão com seguidores (até 15s)...")
+	time.Sleep(15 * time.Second)
 
+	//o código tenta colocar 100 créditos para a COMP-A.
+	// Como a rede pode oscilar, ele usa uma estrutura de tentativas
 	maxTentativas := 5
 	for tentativa := 1; tentativa <= maxTentativas; tentativa++ {
 		transacaoA, err := consenso.NovaTransacao(consenso.TipoRecarga, consenso.DadosRecarga{

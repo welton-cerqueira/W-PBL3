@@ -13,7 +13,7 @@ import (
 // Este é o objeto que será replicado pelo Raft
 type EstadoLedger struct {
 	mu        sync.RWMutex
-	Saldos    map[string]int    `json:"saldos"`    // Saldo de cada companhia
+	Saldos    map[string]int    `json:"saldos"`    // ID da companhia -> Saldo da companhia
 	Historico []Transacao       `json:"historico"` // Histórico imutável de todas as transações
 	Missoes   map[string]string `json:"missoes"`   // ID da requisição -> status da missão
 }
@@ -34,7 +34,7 @@ func (e *EstadoLedger) AplicarTransacao(transacao *Transacao) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	// Adiciona ao histórico primeiro (append-only)
+	// pega a nova transação e a joga diretamente no final da lista do histórico
 	e.Historico = append(e.Historico, *transacao)
 
 	// Aplica a transação ao estado baseado no tipo
@@ -59,10 +59,11 @@ func (e *EstadoLedger) AplicarTransacao(transacao *Transacao) error {
 			return fmt.Errorf("saldo insuficiente: %s tem %d, precisa %d",
 				dados.DeCompanhiaID, e.Saldos[dados.DeCompanhiaID], dados.Valor)
 		}
+		//Faz transferência do valor de uma companhia para a outra
 		e.Saldos[dados.DeCompanhiaID] -= dados.Valor
 		e.Saldos[dados.ParaCompanhiaID] += dados.Valor
 
-		// Registra a missão
+		// Carimba o status da missão como "pago"
 		if dados.IDRequisicao != "" {
 			e.Missoes[dados.IDRequisicao] = "pago"
 		}
@@ -72,6 +73,7 @@ func (e *EstadoLedger) AplicarTransacao(transacao *Transacao) error {
 		if err := json.Unmarshal(transacao.Dados, &dados); err != nil {
 			return err
 		}
+		//atualiza o carimbo da missão de "pago" para "concluida"
 		e.Missoes[dados.IDRequisicao] = "concluida"
 	}
 
