@@ -53,8 +53,16 @@ W-PBL3/
 
 ---
 
+# 🚀 Primeiros passos para compilar o projeto
 
-# 🚀 Execução sem Docker Compose (RECOMENDADO) - Exemplo de execução no Lab Larsid:
+# Execução sem Docker Compose (RECOMENDADO) - Exemplo de execução no Lab Larsid:
+
+### 0. Clone o projeto em todas as máquinas
+
+```bash
+git clone https://github.com/welton-cerqueira/W-PBL3.git
+cd W-PBL3
+```
 
 ### 1. Compilar os binários
 
@@ -99,12 +107,20 @@ chmod +x ~/W-PBL3/bin/*
 ```bash
 for i in {1..8}; do
     ./bin/drone -id=drone$i -addr=172.16.103.5:900$i -brokers="broker1=172.16.103.1:8080,broker2=172.16.103.2:8080,broker3=172.16.103.3:8080" &
+done
 ```
 
 ## 5. Iniciar Campanhias - Pode rodar em qualquer máquina e de forma distribuida
 ```bash
 ./bin/company -id=COMP-A -brokers="broker1=172.16.103.1:8080,broker2=172.16.103.2:8080,broker3=172.16.103.3:8080" &
 ./bin/company -id=COMP-B -brokers="broker1=172.16.103.1:8080,broker2=172.16.103.2:8080,broker3=172.16.103.3:8080" &
+```
+
+## 6. Matar processos em máquinas separadas
+```bash
+pkill -f "bin/broker"
+pkill -f "bin/drone"
+pkill -f "bin/company"
 ```
 
 # 🔗 Verificação da Cadeia (Blockchain)
