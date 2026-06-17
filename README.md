@@ -54,7 +54,7 @@ W-PBL3/
 ---
 
 
-# 🚀 Execução sem Docker Compose (Lab Larsid)
+# 🚀 Execução sem Docker Compose (RECOMENDADO) - Exemplo de execução no Lab Larsid:
 
 ### 1. Compilar os binários
 
@@ -107,6 +107,45 @@ for i in {1..8}; do
 ./bin/company -id=COMP-B -brokers="broker1=172.16.103.1:8080,broker2=172.16.103.2:8080,broker3=172.16.103.3:8080" &
 ```
 
+# 🔗 Verificação da Cadeia (Blockchain)
+
+## Comando
+```bash
+curl -s http://<ENDERECO_DO_BROKER>:8080/verificar-cadeia | jq .
+```
+Substitua <ENDERECO_DO_BROKER> pelo IP de qualquer broker ativo (ex.: 172.16.103.1).
+
+## Exemplo de saída
+```bash
+json
+{
+  "cadeia_integra": true,
+  "mensagem": "✅ Cadeia de 5 laudos íntegra (encadeamento verificado)",
+  "total_laudos": 5
+}
+```
+
+# Visualizar a cadeia completa
+
+## Para ver todos os laudos e seus hashes encadeados (útil para auditoria):
+
+```bash
+curl -s http://<ENDERECO_DO_BROKER>:8080/historico | jq '.historico[] | select(.tipo == "laudo") | {id: .dados.id_requisicao, hash_anterior: .dados.hash_anterior, hash: .dados.hash}'
+```
+## Exemplo de saída (cadeia de um drone)
+```bash
+json
+{
+  "id": "e40066e8-8549-4787-929d-739b204f870c",
+  "hash_anterior": "",
+  "hash": "0e4b1473ede4f811c5e078594534e36231faad8cb31e314fa23bbb92aee8fb74"
+}
+{
+  "id": "131bfe7e-829c-4003-8efe-9c1a37a5738f",
+  "hash_anterior": "0e4b1473ede4f811c5e078594534e36231faad8cb31e314fa23bbb92aee8fb74",
+  "hash": "a0ee727bf5edc7e783fed30e66961e2e714f06f09a81d9e7d8cc3cf145aca592"
+}
+```
 
 # 🐳 Execução com Docker Compose
 
